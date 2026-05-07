@@ -12,6 +12,7 @@ next.user-config.*
 
 # WhatsApp / Baileys session (never commit)
 auth_info_baileys/
+auth_info_account-*/
 
 # Common ignores
 node_modules/
@@ -19,3 +20,4 @@ node_modules/
 .DS_Store
 .vercel
 scheduled_tasks.json
+tsconfig.tsbuildinfo

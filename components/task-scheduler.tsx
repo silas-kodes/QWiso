@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CalendarClock, Plus, Pause, Play, Trash2, ChevronDown,
   ChevronUp, Clock, Users, CheckCircle, XCircle, AlertCircle,
-  Calendar, RefreshCw, X, Wifi, WifiOff, Smartphone,
+  Calendar, RefreshCw, X, Wifi, WifiOff, Smartphone, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -71,11 +71,12 @@ function useAccountStatuses() {
 }
 
 // ── Account picker with connection status ────────────────────────────────────
+// ── Account picker with connection status ────────────────────────────────────
 function AccountPicker({ value, onChange }: { value: AccountId; onChange: (a: AccountId) => void }) {
   const statuses = useAccountStatuses();
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-3">
       {(["account-1", "account-2"] as AccountId[]).map(a => {
         const s = statuses[a];
         const isConnected = s.status === "connected";
@@ -86,31 +87,31 @@ function AccountPicker({ value, onChange }: { value: AccountId; onChange: (a: Ac
           <button
             key={a}
             onClick={() => onChange(a)}
-            className={`rounded-lg border-2 px-3 py-3 text-xs font-medium transition-all text-left space-y-1.5 ${
+            className={`rounded-xl border-2 px-4 py-4 text-left transition-all duration-300 ${
               selected
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/40"
+                ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(255,153,0,0.1)]"
+                : "border-white/5 bg-black/40 hover:border-white/20"
             }`}
           >
-            <div className={`font-semibold ${selected ? "text-primary" : "text-foreground"}`}>
-              {a === "account-1" ? "Account 1" : "Account 2"}
+            <div className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${selected ? "text-primary" : "text-muted-foreground"}`}>
+              {a === "account-1" ? "Primary Terminal" : "Secondary Terminal"}
             </div>
             {isConnected ? (
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-primary text-[10px]">
-                  Connected{s.phone ? ` · +${s.phone}` : ""}
+              <div className="flex items-center gap-2">
+                <Wifi className="w-3.5 h-3.5 text-primary" />
+                <span className="text-white font-bold font-mono text-xs">
+                  {s.phone ? `+${s.phone}` : "CONNECTED"}
                 </span>
               </div>
             ) : isConnecting ? (
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-amber-500 text-[10px]">Connecting…</span>
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-3.5 h-3.5 text-amber-500 animate-spin" />
+                <span className="text-amber-500 font-bold text-[10px] uppercase tracking-widest">Syncing…</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                <span className="text-muted-foreground text-[10px]">Disconnected</span>
+              <div className="flex items-center gap-2">
+                <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Offline</span>
               </div>
             )}
           </button>
@@ -124,11 +125,12 @@ function AccountPicker({ value, onChange }: { value: AccountId; onChange: (a: Ac
 interface CreateFormProps {
   onCreated: () => void;
   onCancel: () => void;
+  initialContacts?: Contact[];
 }
 
-function CreateTaskForm({ onCreated, onCancel }: CreateFormProps) {
-  const [step, setStep] = useState<"contacts" | "template" | "settings">("contacts");
-  const [contacts, setContacts] = useState<Contact[]>([]);
+function CreateTaskForm({ onCreated, onCancel, initialContacts }: CreateFormProps) {
+  const [step, setStep] = useState<"contacts" | "template" | "settings">(initialContacts ? "template" : "contacts");
+  const [contacts, setContacts] = useState<Contact[]>(initialContacts || []);
   const [template, setTemplate] = useState<Template | null>(null);
   const [name, setName] = useState("");
   const [accountId, setAccountId] = useState<AccountId>("account-1");
@@ -177,34 +179,40 @@ function CreateTaskForm({ onCreated, onCancel }: CreateFormProps) {
   };
 
   return (
-    <Card className="p-5 border-primary/30">
-      <div className="flex items-center justify-between mb-4">
+    <Card className="p-6 glass-panel border-primary/20 shadow-[0_0_40px_rgba(255,153,0,0.05)]">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold text-sm">New Scheduled Task</h3>
+          <CalendarClock className="w-5 h-5 text-primary" />
+          <h3 className="font-bold text-lg">Mission Config</h3>
         </div>
-        <button onClick={onCancel} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+        <Button variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground hover:text-white rounded-full">
+           <X className="w-5 h-5" />
+        </Button>
       </div>
 
       {/* Step tabs */}
-      <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5 mb-4">
-        {(["contacts", "template", "settings"] as const).map((s, i) => (
-          <button key={s} onClick={() => setStep(s)}
-            className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all ${
-              step === s ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}>
-            {i + 1}. {s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
+      <div className="flex rounded-xl bg-black/60 p-1 gap-1 mb-8 border border-white/5">
+        {(["contacts", "template", "settings"] as const).map((s, i) => {
+           const active = step === s;
+           const past = (step === "template" && s === "contacts") || (step === "settings" && (s === "contacts" || s === "template"));
+           return (
+              <button key={s} onClick={() => setStep(s)}
+                className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                  active ? "bg-primary text-primary-foreground shadow-lg" : past ? "text-primary/70 hover:text-primary" : "text-muted-foreground hover:text-white"
+                }`}>
+                0{i + 1} {s}
+              </button>
+           );
+        })}
       </div>
 
       {/* Step 1: Contacts */}
       {step === "contacts" && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <ExcelUploader onContactsLoaded={setContacts} contacts={contacts} />
           {validContacts.length > 0 && (
-            <Button className="w-full" size="sm" onClick={() => setStep("template")}>
-              Continue with {validContacts.length} contacts →
+            <Button className="w-full btn-glow font-bold h-12" onClick={() => setStep("template")}>
+              PROCEED WITH {validContacts.length} CONTACTS →
             </Button>
           )}
         </div>
@@ -212,12 +220,12 @@ function CreateTaskForm({ onCreated, onCancel }: CreateFormProps) {
 
       {/* Step 2: Template */}
       {step === "template" && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <TemplateManager selectedTemplate={template} onSelectTemplate={setTemplate} />
           {template && (
-            <Button className="w-full" size="sm" onClick={() => setStep("settings")}>
+            <Button className="w-full btn-glow font-bold h-12" onClick={() => setStep("settings")}>
               {/* eslint-disable-next-line react/no-unescaped-entities */}
-              Continue with "{template.name}" →
+              USE "{template.name.toUpperCase()}" →
             </Button>
           )}
         </div>
@@ -225,83 +233,88 @@ function CreateTaskForm({ onCreated, onCancel }: CreateFormProps) {
 
       {/* Step 3: Settings */}
       {step === "settings" && (
-        <div className="space-y-4">
-          {/* Task name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Task name</label>
-            <Input placeholder="e.g. Dubai Property Campaign" value={name} onChange={e => setName(e.target.value)} />
-          </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Campaign Identifier</label>
+                <Input placeholder="e.g. Dubai Property Campaign" value={name} onChange={e => setName(e.target.value)} className="bg-black/40 border-white/10 font-bold" />
+              </div>
 
-          {/* Account — with live connection status */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">WhatsApp account</label>
-            <AccountPicker value={accountId} onChange={setAccountId} />
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Transmitting Terminal</label>
+                <AccountPicker value={accountId} onChange={setAccountId} />
+              </div>
 
-          {/* Batch size */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Contacts per day</label>
-            <Input type="number" min={1} max={validContacts.length} value={batchSize}
-              onChange={e => setBatchSize(Math.max(1, parseInt(e.target.value) || 1))} />
-            <p className="text-xs text-muted-foreground">
-              {validContacts.length} contacts ÷ {batchSize}/day = <strong>{totalDays} day{totalDays !== 1 ? "s" : ""}</strong>
-            </p>
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Daily Batch Size</label>
+                <Input type="number" min={1} max={validContacts.length} value={batchSize}
+                  onChange={e => setBatchSize(Math.max(1, parseInt(e.target.value) || 1))} className="bg-black/40 border-white/10 font-mono text-center text-lg" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-2">
+                  Timeline: <span className="text-white">{totalDays} Execution Day{totalDays !== 1 ? "s" : ""}</span>
+                </p>
+              </div>
+            </div>
 
-          {/* Send time */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Send time each day</label>
-            <div className="flex gap-2 items-center">
-              <Input type="number" min={0} max={23} value={sendHour}
-                onChange={e => setSendHour(Math.min(23, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="w-20 font-mono" placeholder="HH" />
-              <span className="text-muted-foreground font-bold">:</span>
-              <Input type="number" min={0} max={59} value={sendMinute}
-                onChange={e => setSendMinute(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="w-20 font-mono" placeholder="MM" />
-              <span className="text-xs text-muted-foreground">
-                {String(sendHour).padStart(2, "0")}:{String(sendMinute).padStart(2, "0")}
-              </span>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Execution Window</label>
+                <div className="flex gap-2 items-center">
+                  <Input type="number" min={0} max={23} value={sendHour}
+                    onChange={e => setSendHour(Math.min(23, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="bg-black/40 border-white/10 font-mono text-center text-xl h-12" placeholder="HH" />
+                  <span className="text-primary font-black text-xl animate-pulse">:</span>
+                  <Input type="number" min={0} max={59} value={sendMinute}
+                    onChange={e => setSendMinute(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="bg-black/40 border-white/10 font-mono text-center text-xl h-12" placeholder="MM" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">System Timezone</label>
+                <select value={timezone} onChange={e => setTimezone(e.target.value)}
+                  className="w-full appearance-none rounded-md border border-white/10 bg-black/40 px-4 py-2.5 text-xs font-bold focus:border-primary outline-none">
+                  {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Pulse Interval</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {DELAY_OPTIONS.map(o => (
+                    <button key={o.value} onClick={() => setDelayMs(o.value)}
+                      className={`rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                        delayMs === o.value ? "border-primary bg-primary/20 text-primary" : "border-white/5 bg-black/40 text-muted-foreground hover:border-white/20"
+                      }`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Timezone */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Timezone</label>
-            <select value={timezone} onChange={e => setTimezone(e.target.value)}
-              className="w-full rounded-md border border-border bg-secondary/50 px-3 py-2 text-xs">
-              {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
+          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-[11px] font-medium leading-relaxed text-muted-foreground space-y-1">
+             <div className="flex justify-between">
+               <span>TRANSFERS:</span>
+               <span className="text-white font-bold">{validContacts.length} TOTAL CONTACTS</span>
+             </div>
+             <div className="flex justify-between">
+               <span>FREQUENCY:</span>
+               <span className="text-white font-bold">{batchSize} / DAY @ {String(sendHour).padStart(2, "0")}:{String(sendMinute).padStart(2, "0")}</span>
+             </div>
+             <div className="flex justify-between">
+               <span>TEMPLATE:</span>
+               <span className="text-white font-bold">{template?.name.toUpperCase()}</span>
+             </div>
           </div>
 
-          {/* Delay */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Delay between messages</label>
-            <div className="grid grid-cols-2 gap-1.5">
-              {DELAY_OPTIONS.map(o => (
-                <button key={o.value} onClick={() => setDelayMs(o.value)}
-                  className={`rounded-lg border px-2 py-1.5 text-xs font-mono transition-all text-left ${
-                    delayMs === o.value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"
-                  }`}>
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          {error && <p className="text-xs text-destructive font-bold text-center uppercase tracking-widest">{error}</p>}
 
-          {/* Summary */}
-          <div className="rounded-lg bg-secondary/50 p-3 text-xs space-y-1 text-muted-foreground">
-            <p><strong className="text-foreground">{validContacts.length}</strong> contacts · <strong className="text-foreground">{batchSize}/day</strong> · <strong className="text-foreground">{totalDays} days</strong></p>
-            <p>Sends daily at <strong className="text-foreground">{String(sendHour).padStart(2, "0")}:{String(sendMinute).padStart(2, "0")}</strong> ({timezone})</p>
-            <p>Template: <strong className="text-foreground">{template?.name}</strong> · Account: <strong className="text-foreground">{accountId === "account-1" ? "Account 1" : "Account 2"}</strong></p>
-          </div>
-
-          {error && <p className="text-xs text-destructive">{error}</p>}
-
-          <Button className="w-full" onClick={handleCreate} disabled={saving}>
+          <Button className="w-full btn-glow h-14 font-black uppercase tracking-[0.2em]" onClick={handleCreate} disabled={saving}>
             {saving
-              ? <><RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />Creating…</>
-              : <><CalendarClock className="w-3.5 h-3.5 mr-2" />Create Scheduled Task</>}
+              ? <><RefreshCw className="w-5 h-5 mr-3 animate-spin" />INITIALIZING MISSION…</>
+              : <><CalendarClock className="w-5 h-5 mr-3" />COMMENCE SCHEDULE</>}
           </Button>
         </div>
       )}
@@ -323,11 +336,11 @@ function TaskCard({ task, onRefresh }: { task: ScheduledTask; onRefresh: () => v
   const pct = totalContacts > 0 ? Math.round((totalSent / totalContacts) * 100) : 0;
 
   const accountStatus = statuses[task.accountId];
-  const accountLabel = task.accountId === "account-1" ? "Account 1" : "Account 2";
+  const accountLabel = task.accountId === "account-1" ? "Primary" : "Secondary";
   const isConnected = accountStatus?.status === "connected";
 
   const nextRun = task.status === "active"
-    ? new Date(task.nextRunAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })
+    ? new Date(task.nextRunAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
     : null;
 
   const action = async (a: "pause" | "resume" | "cancel") => {
@@ -347,112 +360,109 @@ function TaskCard({ task, onRefresh }: { task: ScheduledTask; onRefresh: () => v
   };
 
   return (
-    <Card className={`p-4 border ${cfg.bg}`}>
+    <Card className={`p-5 glass-panel border backdrop-blur-xl transition-all duration-500 hover:shadow-[0_0_30px_rgba(255,153,0,0.05)] ${cfg.bg}`}>
       {/* Header row */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4">
+        <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+           <CalendarClock className={`w-6 h-6 ${cfg.color}`} />
+        </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm truncate">{task.name}</span>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${cfg.bg} ${cfg.color}`}>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-black text-base tracking-tight uppercase">{task.name}</span>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.color}`}>
               {cfg.label}
             </span>
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-            {/* Account with connection indicator */}
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
               {isConnected
-                ? <><span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" /><span className="text-primary font-medium">{accountLabel}</span></>
-                : <><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 inline-block" /><span>{accountLabel} · disconnected</span></>
+                ? <><Wifi className="w-3 h-3 text-primary" /><span className="text-white">{accountLabel} TERMINAL</span></>
+                : <><WifiOff className="w-3 h-3 text-destructive" /><span>OFFLINE</span></>
               }
             </span>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Users className="w-3 h-3" />{task.contacts.length} contacts
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Users className="w-3 h-3" />{task.contacts.length} TARGETS
             </span>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Calendar className="w-3 h-3" />Day {Math.min(task.currentDay, task.totalDays)}/{task.totalDays}
-            </span>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />{String(task.sendTimeHour).padStart(2, "0")}:{String(task.sendTimeMinute).padStart(2, "0")} {task.timezone}
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="w-3 h-3" />PROGRESS: {Math.min(task.currentDay, task.totalDays)}/{task.totalDays}
             </span>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {task.status === "active" && (
-            <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => action("pause")} disabled={acting}>
-              <Pause className="w-3 h-3" />
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-black/40 border-white/10 hover:border-primary" onClick={() => action("pause")} disabled={acting}>
+              <Pause className="w-4 h-4" />
             </Button>
           )}
           {task.status === "paused" && (
-            <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => action("resume")} disabled={acting}>
-              <Play className="w-3 h-3" />
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-black/40 border-white/10 hover:border-primary" onClick={() => action("resume")} disabled={acting}>
+              <Play className="w-4 h-4" />
             </Button>
           )}
           {(task.status === "active" || task.status === "paused") && (
-            <Button variant="outline" size="sm" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => action("cancel")} disabled={acting}>
-              <X className="w-3 h-3" />
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-black/40 border-white/10 hover:border-destructive hover:text-destructive" onClick={() => action("cancel")} disabled={acting}>
+              <X className="w-4 h-4" />
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => setConfirmDelete(true)}>
-            <Trash2 className="w-3 h-3" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirmDelete(true)}>
+            <Trash2 className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpanded(e => !e)}>
-            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-white/5" onClick={() => setExpanded(e => !e)}>
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </Button>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="mt-3 space-y-1">
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>
-            <span className="text-primary font-medium">{totalSent}</span> sent ·{" "}
-            <span className="text-destructive font-medium">{totalFailed}</span> failed ·{" "}
-            {totalContacts - totalSent - totalFailed} pending
+      <div className="mt-5 space-y-2">
+        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+          <span className="text-muted-foreground">
+            <span className="text-primary font-black">{totalSent}</span> SUCCESSFUL ·{" "}
+            <span className="text-destructive font-black">{totalFailed}</span> REJECTED ·{" "}
+            {totalContacts - totalSent - totalFailed} QUEUED
           </span>
-          <span className="font-mono">{pct}%</span>
+          <span className="text-white font-mono">{pct}% COMPLETE</span>
         </div>
-        <Progress value={pct} className="h-1.5" />
+        <Progress value={pct} className="h-2 bg-black/40" />
       </div>
 
       {/* Status line */}
       {nextRun && (
-        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-          <Clock className="w-3 h-3" /> Next batch: <strong className="text-foreground">{nextRun}</strong> · {task.batchSize} contacts
-          {!isConnected && <span className="text-amber-500 ml-1">⚠ Account not connected</span>}
-        </p>
-      )}
-      {task.status === "completed" && (
-        <p className="text-xs text-emerald-500 mt-2 flex items-center gap-1">
-          <CheckCircle className="w-3 h-3" /> Completed — all contacts processed
-        </p>
-      )}
-      {task.status === "paused" && (
-        <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" /> Paused — resume to continue sending
-        </p>
+        <div className="mt-4 p-3 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+             <Clock className="w-3.5 h-3.5 text-primary" />
+             NEXT TRANSMISSION: <span className="text-white">{nextRun}</span>
+          </div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+             BATCH: {task.batchSize}
+          </div>
+        </div>
       )}
 
       {/* Expanded: day logs */}
       {expanded && (
-        <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Daily log</p>
+        <div className="mt-5 pt-5 border-t border-white/5 space-y-4">
+          <div className="flex items-center justify-between">
+             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">MISSION LOGS</p>
+             <p className="text-[10px] font-bold text-muted-foreground">{task.timezone}</p>
+          </div>
           {task.dayLogs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No batches sent yet.</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 py-2">Waiting for first execution cycle...</p>
           ) : (
-            <div className="space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {task.dayLogs.map(log => (
-                <div key={log.day} className="flex items-center justify-between rounded-md bg-secondary/40 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-medium">Day {log.day}</span>
-                    <span className="text-xs text-muted-foreground">{log.date}</span>
+                <div key={log.day} className="flex items-center justify-between rounded-xl bg-black/40 border border-white/5 px-4 py-3">
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-primary">CYCLE 0{log.day}</div>
+                    <div className="text-[10px] font-bold text-muted-foreground">{log.date}</div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-primary flex items-center gap-1"><CheckCircle className="w-3 h-3" />{log.sent}</span>
-                    {log.failed > 0 && <span className="text-destructive flex items-center gap-1"><XCircle className="w-3 h-3" />{log.failed}</span>}
-                    <span className="text-muted-foreground font-mono">
-                      {log.ranAt ? new Date(log.ranAt).toLocaleTimeString(undefined, { timeStyle: "short" }) : "—"}
+                  <div className="flex items-center gap-3 text-[10px] font-bold font-mono">
+                    <span className="text-primary flex items-center gap-1">+{log.sent}</span>
+                    {log.failed > 0 && <span className="text-destructive flex items-center gap-1">-{log.failed}</span>}
+                    <span className="text-white/40">
+                      {log.ranAt ? new Date(log.ranAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </span>
                   </div>
                 </div>
@@ -461,25 +471,28 @@ function TaskCard({ task, onRefresh }: { task: ScheduledTask; onRefresh: () => v
           )}
 
           {/* Template preview */}
-          <div className="rounded-lg bg-[#005c4b] p-3 max-w-sm mt-2">
-            <p className="text-[11px] text-white/70 mb-1 uppercase tracking-wider">Template · {task.templateName}</p>
-            <p className="text-xs text-white whitespace-pre-wrap leading-relaxed line-clamp-4">{task.templateContent}</p>
+          <div className="rounded-2xl bg-[#005c4b]/20 border border-emerald-500/10 p-4 space-y-2">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+               <MessageSquare className="w-3.5 h-3.5" />
+               SIGNAL PAYLOAD: {task.templateName.toUpperCase()}
+            </div>
+            <p className="text-xs text-white/80 whitespace-pre-wrap leading-relaxed font-medium line-clamp-6">{task.templateContent}</p>
           </div>
         </div>
       )}
 
       {/* Delete confirm */}
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
+        <AlertDialogContent className="glass-panel border-destructive/20">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete task?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete &quot;<strong>{task.name}</strong>&quot; and all its progress. This cannot be undone.
+            <AlertDialogTitle className="font-black uppercase tracking-tight">TERMINATE MISSION?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs font-medium text-muted-foreground uppercase tracking-widest leading-relaxed">
+              Permanent deletion requested for &quot;<strong className="text-white">{task.name}</strong>&quot;. This action will purge all sequence data and cannot be recovered.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel className="bg-white/5 border-white/10 font-bold uppercase text-[10px] tracking-widest">Abort</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90 font-black uppercase text-[10px] tracking-widest" onClick={handleDelete}>CONFIRM TERMINATION</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -488,9 +501,9 @@ function TaskCard({ task, onRefresh }: { task: ScheduledTask; onRefresh: () => v
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export function TaskScheduler() {
+export function TaskScheduler({ initialContacts, initialShowCreate }: { initialContacts?: Contact[]; initialShowCreate?: boolean }) {
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(initialShowCreate || false);
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -514,21 +527,26 @@ export function TaskScheduler() {
   const completedTasks = tasks.filter(t => t.status === "completed" || t.status === "cancelled");
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-sm">Scheduled Tasks</span>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+            <CalendarClock className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-sm uppercase tracking-[0.1em]">Mission Control</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Automated Transmission Streams</span>
+          </div>
           {activeTasks.length > 0 && (
-            <span className="rounded-full bg-primary/15 text-primary text-[10px] font-bold px-2 py-0.5">
-              {activeTasks.length} active
+            <span className="ml-2 rounded-full bg-primary text-primary-foreground text-[9px] font-black px-2 py-0.5 uppercase tracking-widest animate-pulse">
+              {activeTasks.length} Live
             </span>
           )}
         </div>
         {!showCreate && (
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="w-3.5 h-3.5 mr-1.5" />New Task
+          <Button size="sm" className="btn-glow font-bold uppercase text-[10px] tracking-widest h-10 px-6" onClick={() => setShowCreate(true)}>
+            <Plus className="w-4 h-4 mr-2" />Initialize Mission
           </Button>
         )}
       </div>
@@ -538,45 +556,53 @@ export function TaskScheduler() {
         <CreateTaskForm
           onCreated={() => { setShowCreate(false); fetchTasks(); }}
           onCancel={() => setShowCreate(false)}
+          initialContacts={initialContacts}
         />
       )}
 
       {/* Empty state */}
       {!loading && tasks.length === 0 && !showCreate && (
-        <Card className="p-8">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <CalendarClock className="w-10 h-10 text-muted-foreground/40" />
-            <div>
-              <p className="font-medium text-sm">No scheduled tasks</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Create a task to send messages to batches of contacts daily at a set time.
-              </p>
-            </div>
-            <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1.5" />Create First Task
-            </Button>
+        <div className="py-20 glass-panel border-dashed border-white/10 rounded-3xl flex flex-col items-center gap-6 text-center">
+          <div className="relative">
+             <CalendarClock className="w-16 h-16 text-white/5" />
+             <Plus className="absolute -bottom-2 -right-2 w-8 h-8 text-primary/40" />
           </div>
-        </Card>
+          <div className="space-y-2">
+            <p className="font-black text-lg uppercase tracking-tight">No Active Missions</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest max-w-sm px-6 leading-relaxed">
+              Initialize your first automated transmission sequence to begin batch message processing.
+            </p>
+          </div>
+          <Button className="btn-glow font-black uppercase text-[10px] tracking-widest h-12 px-8" onClick={() => setShowCreate(true)}>
+            <Plus className="w-4 h-4 mr-2" />Request First Link
+          </Button>
+        </div>
       )}
 
       {activeTasks.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active</p>
-          {activeTasks.map(t => <TaskCard key={t.id} task={t} onRefresh={fetchTasks} />)}
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary ml-1">Live Sequences</p>
+          <div className="space-y-4">
+            {activeTasks.map(t => <TaskCard key={t.id} task={t} onRefresh={fetchTasks} />)}
+          </div>
         </div>
       )}
 
       {pausedTasks.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Paused</p>
-          {pausedTasks.map(t => <TaskCard key={t.id} task={t} onRefresh={fetchTasks} />)}
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 ml-1">Suspended Missions</p>
+          <div className="space-y-4">
+            {pausedTasks.map(t => <TaskCard key={t.id} task={t} onRefresh={fetchTasks} />)}
+          </div>
         </div>
       )}
 
       {completedTasks.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Completed / Cancelled</p>
-          {completedTasks.map(t => <TaskCard key={t.id} task={t} onRefresh={fetchTasks} />)}
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground ml-1">Archived Cycles</p>
+          <div className="space-y-4">
+            {completedTasks.map(t => <TaskCard key={t.id} task={t} onRefresh={fetchTasks} />)}
+          </div>
         </div>
       )}
     </div>

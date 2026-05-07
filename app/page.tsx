@@ -1,19 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { MessageCircle, Users, CalendarClock, Clock } from "lucide-react";
+import { 
+  MessageCircle, Users, CalendarClock, Clock, Zap, ShieldCheck, 
+  Database, LayoutDashboard, LogOut, Play, RefreshCw 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ExcelUploader } from "@/components/excel-uploader";
 import { TemplateManager } from "@/components/template-manager";
 import { WhatsAppAuth } from "@/components/whatsapp-auth";
-import { MessageSender } from "@/components/message-sender";
 import { TaskScheduler } from "@/components/task-scheduler";
+import { PhoneForge } from "@/components/phone-forge";
+import { LoginComponent } from "@/components/login";
 import type { Contact } from "@/lib/excel-parser";
 import type { Template } from "@/lib/templates";
 import type { AccountId, WhatsAppState } from "@/lib/whatsapp";
 
 // ─── Live clock ───────────────────────────────────────────────────────────────
-const CLOCK_TZ = "Asia/Dubai"; // change this to your preferred timezone
+const CLOCK_TZ = "Asia/Dubai";
 
 function LiveClock() {
   const [time, setTime] = useState("");
@@ -23,17 +27,10 @@ function LiveClock() {
     const tick = () => {
       const now = new Date();
       setTime(now.toLocaleTimeString("en-US", {
-        timeZone: CLOCK_TZ,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
+        timeZone: CLOCK_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
       }));
       setDate(now.toLocaleDateString("en-US", {
-        timeZone: CLOCK_TZ,
-        weekday: "short",
-        month: "short",
-        day: "numeric",
+        timeZone: CLOCK_TZ, weekday: "short", month: "short", day: "numeric",
       }));
     };
     tick();
@@ -42,279 +39,293 @@ function LiveClock() {
   }, []);
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
-      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+    <div className="flex items-center gap-2 shrink-0 bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
+      <Clock className="w-3.5 h-3.5 text-primary" />
       <div className="text-right">
-        <p className="font-mono text-sm font-semibold leading-tight">{time}</p>
-        <p className="text-[10px] text-muted-foreground leading-tight">{date} · {CLOCK_TZ}</p>
+        <p className="font-mono text-sm font-bold leading-tight tracking-tighter text-white">{time}</p>
+        <p className="text-[9px] text-muted-foreground uppercase tracking-widest leading-tight">{date}</p>
       </div>
-    </div>
-  );
-}
-
-// ─── Per-account state ────────────────────────────────────────────────────────
-interface AccountState {
-  contacts: Contact[];
-  template: Template | null;
-  wa: Pick<WhatsAppState, "status" | "phone">;
-  tab: "upload" | "template" | "connect" | "send";
-}
-
-function initAccount(): AccountState {
-  return {
-    contacts: [],
-    template: null,
-    wa: { status: "disconnected", phone: null },
-    tab: "upload",
-  };
-}
-
-const ACCOUNTS: { id: AccountId; label: string; color: string }[] = [
-  { id: "account-1", label: "Account 1", color: "text-primary" },
-  { id: "account-2", label: "Account 2", color: "text-amber-500" },
-];
-
-const TABS = [
-  { id: "upload",   label: "1. Upload" },
-  { id: "template", label: "2. Template" },
-  { id: "connect",  label: "3. Connect" },
-  { id: "send",     label: "4. Send" },
-] as const;
-
-type TabId = typeof TABS[number]["id"];
-
-function canReach(tab: TabId, s: AccountState): boolean {
-  if (tab === "upload")   return true;
-  if (tab === "template") return s.contacts.filter((c) => c.isValid).length > 0;
-  if (tab === "connect")  return s.template !== null;
-  if (tab === "send")     return s.wa.status === "connected";
-  return false;
-}
-
-// ─── Account Panel ────────────────────────────────────────────────────────────
-function AccountPanel({
-  id, label, color, state,
-  onContactsLoaded, onTemplateSelected, onWaSummaryChange,
-}: {
-  id: AccountId; label: string; color: string;
-  state: AccountState;
-  onContactsLoaded: (c: Contact[]) => void;
-  onTemplateSelected: (t: Template | null) => void;
-  onWaSummaryChange: (s: Pick<WhatsAppState, "status" | "phone">) => void;
-}) {
-  const [tab, setTab] = useState<TabId>("upload");
-  const validContacts = state.contacts.filter((c) => c.isValid);
-  const isConnected = state.wa.status === "connected";
-
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Account header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className={`w-4 h-4 ${color}`} />
-          <span className={`font-semibold text-sm ${color}`}>{label}</span>
-        </div>
-        {/* Connection status pill */}
-        {state.wa.status === "connected" ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-            {state.wa.phone ? `+${state.wa.phone}` : "Connected"}
-          </span>
-        ) : state.wa.status === "connecting" || state.wa.status === "pairing" || state.wa.status === "qr_ready" ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Connecting…
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-            Disconnected
-          </span>
-        )}
-      </div>
-
-      {/* Tab bar */}
-      <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5">
-        {TABS.map((t) => {
-          const reachable = canReach(t.id, state);
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              disabled={!reachable}
-              onClick={() => reachable && setTab(t.id)}
-              className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all ${
-                active
-                  ? "bg-background shadow-sm text-foreground"
-                  : reachable
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-muted-foreground/40 cursor-not-allowed"
-              }`}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab content */}
-      <Card className="p-4 min-h-[320px]">
-        {tab === "upload" && (
-          <ExcelUploader onContactsLoaded={onContactsLoaded} contacts={state.contacts} />
-        )}
-        {tab === "template" && (
-          <TemplateManager selectedTemplate={state.template} onSelectTemplate={onTemplateSelected} />
-        )}
-        {tab === "connect" && (
-          <WhatsAppAuth accountId={id} onSummaryChange={onWaSummaryChange} />
-        )}
-        {tab === "send" && state.template && (
-          <MessageSender
-            accountId={id}
-            contacts={validContacts}
-            template={state.template}
-            isWhatsAppConnected={isConnected}
-          />
-        )}
-        {tab === "send" && !state.template && (
-          <div className="flex items-center justify-center h-full min-h-[200px] text-sm text-muted-foreground">
-            Select a template first (tab 2)
-          </div>
-        )}
-      </Card>
     </div>
   );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [pageTab, setPageTab] = useState<"bulk" | "scheduler">("bulk");
-  const [accs, setAccs] = useState<Record<AccountId, AccountState>>({
-    "account-1": initAccount(),
-    "account-2": initAccount(),
+  const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [pageTab, setPageTab] = useState<"connect" | "generate" | "validate" | "schedule" | "templates">("connect");
+  const [schedulerInitial, setSchedulerInitial] = useState<{ contacts: Contact[]; showCreate: boolean } | null>(null);
+  const [waStatuses, setWaStatuses] = useState<Record<AccountId, Pick<WhatsAppState, "status" | "phone">>>({
+    "account-1": { status: "disconnected", phone: null },
+    "account-2": { status: "disconnected", phone: null },
   });
 
-  // Stable updater — uses functional setState so it never needs `accs` in deps
-  const update = useCallback((id: AccountId, patch: Partial<AccountState>) => {
-    setAccs((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
-  }, []); // stable forever
+  // Check auth on mount
+  useEffect(() => {
+    fetch("/api/auth").then(r => r.json()).then(data => setIsAuth(data.authenticated));
+  }, []);
 
-  // ── Per-account stable callbacks — memoized per account id ──────────────────
-  // IMPORTANT: These MUST be stable references (useCallback with [] deps).
-  // Passing inline arrows like (c) => update(id, {...}) directly in JSX creates
-  // a new function on every render, which causes infinite loops in child
-  // useEffect hooks that list onSummaryChange as a dependency.
-  const onContactsLoaded1 = useCallback((c: Contact[]) => update("account-1", { contacts: c }), [update]);
-  const onContactsLoaded2 = useCallback((c: Contact[]) => update("account-2", { contacts: c }), [update]);
-  const onTemplateSelected1 = useCallback((t: Template | null) => update("account-1", { template: t }), [update]);
-  const onTemplateSelected2 = useCallback((t: Template | null) => update("account-2", { template: t }), [update]);
-  const onWaSummaryChange1 = useCallback((wa: Pick<WhatsAppState, "status" | "phone">) => update("account-1", { wa }), [update]);
-  const onWaSummaryChange2 = useCallback((wa: Pick<WhatsAppState, "status" | "phone">) => update("account-2", { wa }), [update]);
-
-  const stableCallbacks: Record<AccountId, {
-    onContactsLoaded: (c: Contact[]) => void;
-    onTemplateSelected: (t: Template | null) => void;
-    onWaSummaryChange: (s: Pick<WhatsAppState, "status" | "phone">) => void;
-  }> = {
-    "account-1": { onContactsLoaded: onContactsLoaded1, onTemplateSelected: onTemplateSelected1, onWaSummaryChange: onWaSummaryChange1 },
-    "account-2": { onContactsLoaded: onContactsLoaded2, onTemplateSelected: onTemplateSelected2, onWaSummaryChange: onWaSummaryChange2 },
-  };
-
-  // Poll both account statuses
+  // Poll account statuses
   useEffect(() => {
     let alive = true;
     const pull = async () => {
-      for (const { id } of ACCOUNTS) {
+      for (const id of ["account-1", "account-2"] as AccountId[]) {
         try {
           const r = await fetch(`/api/whatsapp/${id}/status`);
           const s: WhatsAppState = await r.json();
           if (!alive) return;
-          setAccs((prev) => ({ ...prev, [id]: { ...prev[id], wa: { status: s.status, phone: s.phone } } }));
+          setWaStatuses(prev => ({ ...prev, [id]: { status: s.status, phone: s.phone } }));
         } catch { /* ignore */ }
       }
     };
-    void pull();
+    pull();
     const t = setInterval(pull, 5000);
-    const onVisible = () => { if (document.visibilityState === "visible") void pull(); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => { alive = false; clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
+    return () => { alive = false; clearInterval(t); };
   }, []);
 
+  // ── Auto-advance when WhatsApp connects ──────────────────────────────────
+  useEffect(() => {
+    if (pageTab === "connect") {
+      const anyConnected = Object.values(waStatuses).some(s => s.status === "connected");
+      if (anyConnected) {
+        // Optional: wait a moment so user sees the "connected" state
+        const timer = setTimeout(() => setPageTab("generate"), 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [waStatuses, pageTab]);
+
+  const [startingAll, setStartingAll] = useState(false);
+
+  const handleStartAll = async () => {
+    setStartingAll(true);
+    try {
+      await fetch("/api/whatsapp/start-all", { method: "POST" });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setStartingAll(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth", { method: "DELETE" });
+    setIsAuth(false);
+  };
+
+
+  if (isAuth === null) return <div className="min-h-screen bg-background flex items-center justify-center font-mono text-primary animate-pulse">BOOTING QWISO...</div>;
+  if (isAuth === false) return <LoginComponent onLogin={() => setIsAuth(true)} />;
+
+  const anyAccountConnected = Object.values(waStatuses).some(s => s.status === "connected");
+
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background relative pb-12">
+      {/* Top Banner */}
+      <div className="bg-primary text-primary-foreground py-1 px-4 text-[10px] font-bold uppercase tracking-[0.3em] flex justify-between items-center">
+        <span>Quantum WhatsApp Integrated Scheduler & Optimizer</span>
+        <span>Build 4.6.2-Stable</span>
+      </div>
+
       {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
+      <header className="border-b border-white/5 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                <MessageCircle className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
+                <Zap className="w-6 h-6 text-primary fill-primary/20" />
               </div>
               <div>
-                <h1 className="text-base font-bold leading-tight">WBM</h1>
-                <p className="text-[11px] text-muted-foreground leading-tight">WhatsApp Bulk Messenger · Dual Account</p>
+                <h1 className="text-2xl font-black tracking-tighter text-white">QWISO</h1>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Unified Control Terminal</p>
               </div>
             </div>
-            <LiveClock />
+
+            <div className="flex items-center gap-6">
+              <LiveClock />
+              <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Two-column layout */}
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-
-        {/* Page-level tab switcher */}
-        <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5 mb-6 max-w-sm">
-          <button
-            onClick={() => setPageTab("bulk")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-              pageTab === "bulk" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" /> Bulk Send
-          </button>
-          <button
-            onClick={() => setPageTab("scheduler")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-              pageTab === "scheduler" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <CalendarClock className="w-3.5 h-3.5" /> Scheduler
-          </button>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Navigation - The 5 Steps */}
+        <div className="grid grid-cols-5 gap-2 mb-8">
+          {[
+            { id: "connect", label: "Connect", icon: ShieldCheck },
+            { id: "generate", label: "Generate", icon: Database },
+            { id: "validate", label: "Validate", icon: Zap },
+            { id: "templates", label: "Templates", icon: LayoutDashboard },
+            { id: "schedule", label: "Schedule", icon: CalendarClock },
+          ].map((step, idx) => {
+            const active = pageTab === step.id;
+            const Icon = step.icon;
+            return (
+              <button
+                key={step.id}
+                onClick={() => setPageTab(step.id as any)}
+                className={`group flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-300 ${
+                  active 
+                    ? "bg-primary/10 border-primary text-primary shadow-[0_0_20px_rgba(255,153,0,0.15)]" 
+                    : "bg-card/50 border-white/5 text-muted-foreground hover:border-white/20 hover:text-white"
+                }`}
+              >
+                <div className={`p-2 rounded-lg transition-colors ${active ? "bg-primary/20" : "bg-white/5 group-hover:bg-white/10"}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[9px] uppercase tracking-widest font-bold opacity-50">Step 0{idx + 1}</span>
+                  <span className="text-xs font-bold">{step.label}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Bulk send view */}
-        {pageTab === "bulk" && (
-          <>
-            <Card className="p-4 mb-6">
-              <p className="text-sm text-muted-foreground">
-                Each column is an independent WhatsApp account. Upload a separate Excel file, choose a template, connect via QR or phone pairing, then send — all independently per account.
-              </p>
-            </Card>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {ACCOUNTS.map(({ id, label, color }) => (
-                <AccountPanel
-                  key={id}
-                  id={id}
-                  label={label}
-                  color={color}
-                  state={accs[id]}
-                  onContactsLoaded={stableCallbacks[id].onContactsLoaded}
-                  onTemplateSelected={stableCallbacks[id].onTemplateSelected}
-                  onWaSummaryChange={stableCallbacks[id].onWaSummaryChange}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        {/* Step Content */}
+        <div className="space-y-6">
+          {pageTab === "connect" && (
+            <div className="space-y-6">
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleStartAll} 
+                  disabled={startingAll}
+                  className="btn-glow font-bold uppercase text-[10px] tracking-widest px-6"
+                >
+                  {startingAll ? (
+                    <><RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />Syncing Terminal State…</>
+                  ) : (
+                    <><Play className="w-3.5 h-3.5 mr-2" />Resume All Linked Sessions</>
+                  )}
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="p-6 glass-panel space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm uppercase tracking-wider">Primary Account</h3>
+                  </div>
+                  <WhatsAppAuth accountId="account-1" onSummaryChange={() => {}} />
+                </Card>
+                <Card className="p-6 glass-panel space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-accent" />
+                    <h3 className="font-bold text-sm uppercase tracking-wider text-accent">Secondary Account</h3>
+                  </div>
+                  <WhatsAppAuth accountId="account-2" onSummaryChange={() => {}} />
+                </Card>
+              </div>
 
-        {/* Scheduler view */}
-        {pageTab === "scheduler" && (
-          <Card className="p-5">
-            <TaskScheduler />
-          </Card>
-        )}
+              {anyAccountConnected && (
+                <div className="flex justify-center pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-12 h-12"
+                    onClick={() => setPageTab("generate")}
+                  >
+                    Account Linked - Continue to Step 02 →
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+
+          {pageTab === "generate" && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              <PhoneForge 
+                mode="generate_only"
+                accountStatuses={waStatuses} 
+                onCreateCampaign={() => setPageTab("validate")} 
+              />
+              <div className="flex justify-center">
+                <Button 
+                  variant="outline" 
+                  className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-12 h-12"
+                  onClick={() => setPageTab("validate")}
+                >
+                  Skip to Step 03: Validation →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pageTab === "validate" && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              <PhoneForge 
+                mode="validate_only"
+                accountStatuses={waStatuses} 
+                onCreateCampaign={(phones) => {
+                  const contacts: Contact[] = phones.map((p, i) => ({
+                    phone: "+" + p.replace(/\D/g, ""),
+                    rawPhone: p,
+                    isValid: true,
+                    row: i + 1,
+                  }));
+                  setSchedulerInitial({ contacts, showCreate: true });
+                  setPageTab("schedule");
+                }}
+              />
+              <div className="flex justify-center">
+                 <Button 
+                  variant="ghost" 
+                  className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]"
+                  onClick={() => setPageTab("templates")}
+                >
+                  Manage Messaging Templates →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pageTab === "templates" && (
+            <div className="space-y-6">
+              <Card className="p-6 glass-panel">
+                <TemplateManager selectedTemplate={null} onSelectTemplate={() => {}} />
+              </Card>
+              <div className="flex justify-center">
+                <Button 
+                  variant="outline" 
+                  className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-12 h-12"
+                  onClick={() => setPageTab("schedule")}
+                >
+                  Go to Final Step: Scheduling →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pageTab === "schedule" && (
+            <Card className="p-6 glass-panel">
+              <TaskScheduler
+                initialContacts={schedulerInitial?.contacts}
+                initialShowCreate={schedulerInitial?.showCreate}
+              />
+            </Card>
+          )}
+        </div>
       </div>
+
+      {/* Footer Status Bar */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-md border-t border-white/5 px-6 py-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground z-50">
+        <div className="flex gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${waStatuses["account-1"].status === "connected" ? "bg-primary animate-pulse" : "bg-white/10"}`} />
+            ACC-01: {waStatuses["account-1"].status}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${waStatuses["account-2"].status === "connected" ? "bg-accent animate-pulse" : "bg-white/10"}`} />
+            ACC-02: {waStatuses["account-2"].status}
+          </div>
+        </div>
+        <div className="flex gap-4 items-center">
+          <span className="text-primary/50">System Nominal</span>
+          <span className="bg-white/5 px-2 py-0.5 rounded text-[8px]">v4.6.2</span>
+        </div>
+      </footer>
     </main>
   );
 }
+

@@ -54,6 +54,11 @@ class WhatsAppAccount {
   getState(): WhatsAppState { return { ...this.state }; }
   isConnected() { return this.state.status === "connected"; }
 
+  hasSession(): boolean {
+    return fs.existsSync(path.join(this.authDir, "creds.json"));
+  }
+
+
   subscribe(cb: Subscriber): () => void {
     this.subscribers.add(cb);
     return () => this.subscribers.delete(cb);
@@ -87,6 +92,19 @@ class WhatsAppAccount {
     catch (err) { console.error(`[${this.id}] send failed → ${phone}:`, err); return false; }
   }
 
+  async isRegisteredUser(phone: string): Promise<boolean> {
+    if (!this.socket || !this.isConnected()) throw new Error("Not connected");
+    const jid = phone.replace(/[^\d]/g, "") + "@s.whatsapp.net";
+    try {
+      const results = await this.socket.onWhatsApp(jid);
+      const result = results?.[0];
+      return Boolean(result?.exists) ?? false;
+    } catch (err) {
+      console.error(`[${this.id}] isRegisteredUser failed → ${phone}:`, err);
+      return false;
+    }
+  }
+
   private setState(p: Partial<WhatsAppState>) {
     this.state = { ...this.state, ...p };
     this.subscribers.forEach((cb) => { try { cb(); } catch { /* ignore */ } });
@@ -98,8 +116,18 @@ class WhatsAppAccount {
     const { state: authState, saveCreds } = await useMultiFileAuthState(this.authDir);
     const { version } = await fetchLatestBaileysVersion();
     const logger = pino({ level: "silent" });
+    const sessionPath = path.join(this.authDir, "creds.json");
+    const isResuming = fs.existsSync(sessionPath);
+    
+    if (isResuming) {
+      console.log(`[${this.id}] Found existing session at ${this.authDir}. Resuming…`);
+    } else {
+      console.log(`[${this.id}] No session found. Initializing new connection…`);
+    }
+
     this.pairingCodeRequested = false;
     this.setState({ status: "connecting", loginMethod: this.pendingMethod, qrCode: null, pairingCode: null, error: null });
+
 
     // BUG FIX 3: Browsers.ubuntu is rejected by WhatsApp → "Couldn't link device"
     // macOS Chrome matches the official WhatsApp Web fingerprint and is accepted.
@@ -218,8 +246,16 @@ class WhatsAppManager {
     if (!a) throw new Error(`Unknown account: ${id}`);
     return a;
   }
+  async startAll(): Promise<void> {
+    for (const account of this.accounts.values()) {
+      if (account.hasSession() && !account.isConnected()) {
+        account.initialize().catch(err => console.error(`[${account.getId()}] startAll failed:`, err));
+      }
+    }
+  }
 }
 
 const g = globalThis as typeof globalThis & { __wam?: WhatsAppManager };
 if (!g.__wam) g.__wam = new WhatsAppManager();
 export const whatsappManager = g.__wam;
+export const startAllAccounts = () => whatsappManager.startAll();

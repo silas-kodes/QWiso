@@ -100,130 +100,129 @@ export function TemplateManager({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          Message Templates
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          Message Library
         </h3>
         {!isCreating && !editingId && (
           <Button
             variant="outline"
             size="sm"
+            className="btn-glow font-bold uppercase text-[10px] tracking-widest bg-black/40 border-white/10"
             onClick={() => setIsCreating(true)}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            New Template
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            New Entry
           </Button>
         )}
       </div>
 
       {/* Create Form */}
       {isCreating && (
-        <Card className="p-4 space-y-4 border-primary">
+        <Card className="p-5 glass-panel space-y-4 border-primary/50 shadow-[0_0_20px_rgba(255,153,0,0.1)]">
           <Input
-            placeholder="Template name"
+            placeholder="Template identifier (e.g. Welcome Message)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="bg-background"
+            className="bg-black/40 border-white/10 font-bold"
           />
           <Textarea
-            placeholder="Message content..."
+            placeholder="Message payload..."
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
             rows={4}
-            className="bg-background resize-none"
+            className="bg-black/40 border-white/10 resize-none font-mono text-xs"
           />
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={cancelEdit}>
-              <X className="w-4 h-4 mr-1" />
-              Cancel
+            <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px] tracking-widest" onClick={cancelEdit}>
+              Abort
             </Button>
             <Button
               size="sm"
+              className="btn-glow font-bold uppercase text-[10px] tracking-widest"
               onClick={handleCreate}
               disabled={!newName.trim() || !newContent.trim()}
             >
-              <Check className="w-4 h-4 mr-1" />
-              Save
+              Initialize Template
             </Button>
           </div>
         </Card>
       )}
 
       {/* Template List */}
-      <ScrollArea className="h-80">
+      <ScrollArea className="h-[350px]">
         <div className="space-y-3 pr-4">
           {templates.map((template) =>
             editingId === template.id ? (
-              <Card key={template.id} className="p-4 space-y-4 border-primary">
+              <Card key={template.id} className="p-5 glass-panel space-y-4 border-primary/50 shadow-[0_0_20px_rgba(255,153,0,0.1)]">
                 <Input
                   placeholder="Template name"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="bg-background"
+                  className="bg-black/40 border-white/10 font-bold"
                 />
                 <Textarea
                   placeholder="Message content..."
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   rows={4}
-                  className="bg-background resize-none"
+                  className="bg-black/40 border-white/10 resize-none font-mono text-xs"
                 />
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={cancelEdit}>
-                    <X className="w-4 h-4 mr-1" />
+                  <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px] tracking-widest" onClick={cancelEdit}>
                     Cancel
                   </Button>
                   <Button
                     size="sm"
+                    className="btn-glow font-bold uppercase text-[10px] tracking-widest"
                     onClick={() => handleUpdate(template.id)}
                     disabled={!newName.trim() || !newContent.trim()}
                   >
-                    <Check className="w-4 h-4 mr-1" />
-                    Update
+                    Commit Changes
                   </Button>
                 </div>
               </Card>
             ) : (
               <Card
                 key={template.id}
-                className={`p-4 cursor-pointer transition-all hover:bg-secondary/50 ${
+                className={`p-5 cursor-pointer transition-all duration-300 glass-panel hover:border-white/20 ${
                   selectedTemplate?.id === template.id
-                    ? "border-primary bg-primary/5"
-                    : ""
+                    ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(255,153,0,0.1)]"
+                    : "border-white/5 bg-black/40"
                 }`}
                 onClick={() => onSelectTemplate(template)}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <MessageSquare className="w-4 h-4 text-primary flex-shrink-0" />
-                      <h4 className="font-medium truncate">{template.name}</h4>
+                      <h4 className="font-bold text-sm tracking-tight truncate">{template.name}</h4>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-3 font-medium leading-relaxed">
                       {template.content}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex flex-col gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 rounded-lg hover:bg-white/5"
                       onClick={(e) => {
                         e.stopPropagation();
                         startEdit(template);
                       }}
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3.5 h-3.5 text-white/50 hover:text-white" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-8 w-8 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         setDeleteId(template.id);
                       }}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -232,10 +231,10 @@ export function TemplateManager({
           )}
 
           {templates.length === 0 && !isCreating && (
-            <div className="text-center py-8 text-muted-foreground">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No templates yet</p>
-              <p className="text-sm">Create your first message template</p>
+            <div className="text-center py-12 glass-panel border-dashed border-white/10 rounded-2xl">
+              <MessageSquare className="w-10 h-10 mx-auto mb-4 opacity-20 text-primary" />
+              <p className="text-sm font-bold text-white/50">NO TEMPLATES FOUND</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Create your first entry to begin</p>
             </div>
           )}
         </div>
@@ -243,15 +242,20 @@ export function TemplateManager({
 
       {/* Selected Template Preview */}
       {selectedTemplate && !editingId && (
-        <Card className="p-4 bg-primary/5 border-primary">
-          <p className="text-xs font-medium text-primary mb-2">
-            Selected Template
+        <div className="p-5 glass-panel border-primary/20 bg-primary/5 rounded-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-3">
+             <Check className="w-4 h-4 text-primary opacity-50" />
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-3">
+            Active Selection
           </p>
-          <p className="text-sm font-medium mb-1">{selectedTemplate.name}</p>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {selectedTemplate.content}
-          </p>
-        </Card>
+          <p className="text-sm font-bold mb-2 text-white">{selectedTemplate.name}</p>
+          <ScrollArea className="max-h-32">
+            <p className="text-xs text-muted-foreground font-medium leading-relaxed whitespace-pre-wrap">
+              {selectedTemplate.content}
+            </p>
+          </ScrollArea>
+        </div>
       )}
 
       {/* Delete Confirmation */}

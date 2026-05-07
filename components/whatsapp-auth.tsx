@@ -137,7 +137,7 @@ export function WhatsAppAuth({ accountId, onSummaryChange }: WhatsAppAuthProps) 
   const isActive = ["connecting", "qr_ready", "pairing"].includes(state.status);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <StatusBanner state={state} />
 
       {state.status === "connected" ? (
@@ -152,7 +152,7 @@ export function WhatsAppAuth({ accountId, onSummaryChange }: WhatsAppAuthProps) 
       ) : state.status === "pairing" ? (
         <PairingCodeView code={state.pairingCode} onRetry={retry} onDisconnect={disconnect} />
       ) : (
-        <>
+        <div className="space-y-6">
           {/* Method picker */}
           <div className="grid grid-cols-2 gap-3">
             {(["qr", "pairing"] as LoginMethod[]).map((m) => (
@@ -160,15 +160,15 @@ export function WhatsAppAuth({ accountId, onSummaryChange }: WhatsAppAuthProps) 
                 key={m}
                 onClick={() => { setMethod(m); setInputError(""); }}
                 disabled={isActive}
-                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-medium transition-all ${
+                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-bold transition-all duration-300 ${
                   method === m
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/40"
+                    ? "border-primary bg-primary/10 text-primary shadow-[0_0_15px_rgba(255,153,0,0.1)]"
+                    : "border-white/5 bg-black/40 text-muted-foreground hover:border-white/20 hover:text-white"
                 }`}
               >
                 {m === "qr"
-                  ? <><QrCode className="w-6 h-6" /><span>QR Code</span><span className="text-xs font-normal opacity-70">Scan with camera</span></>
-                  : <><KeyRound className="w-6 h-6" /><span>Phone Number</span><span className="text-xs font-normal opacity-70">Enter 8-digit code</span></>
+                  ? <><QrCode className="w-8 h-8 mb-1" /><span>QR Login</span><span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Camera Scan</span></>
+                  : <><Smartphone className="w-8 h-8 mb-1" /><span>Pairing</span><span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Manual Code</span></>
                 }
               </button>
             ))}
@@ -177,35 +177,33 @@ export function WhatsAppAuth({ accountId, onSummaryChange }: WhatsAppAuthProps) 
           {/* Phone input (pairing only) */}
           {method === "pairing" && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">WhatsApp phone number</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Target Number</label>
               <Input
-                placeholder="+971501234567"
+                placeholder="+971 50 123 4567"
                 value={phoneInput}
                 onChange={(e) => setPhoneInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && connect()}
                 disabled={isRequesting || isActive}
-                className="font-mono"
+                className="bg-black/40 border-white/10 font-mono text-center text-lg h-12"
               />
-              {inputError && <p className="text-xs text-destructive">{inputError}</p>}
-              <p className="text-xs text-muted-foreground">Include country code · e.g. +971 50 123 4567</p>
+              {inputError && <p className="text-xs text-destructive font-bold">{inputError}</p>}
             </div>
           )}
 
           <Button
-            className="w-full"
-            size="lg"
+            className="w-full btn-glow h-12 font-bold uppercase tracking-widest"
             onClick={connect}
             disabled={isRequesting || isActive || (method === "pairing" && !phoneInput.trim())}
           >
             {isRequesting || isActive ? (
-              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Connecting…</>
+              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Syncing…</>
             ) : method === "qr" ? (
-              <><QrCode className="w-4 h-4 mr-2" />Start Session &amp; Show QR</>
+              <><QrCode className="w-4 h-4 mr-2" />Generate Access QR</>
             ) : (
-              <><KeyRound className="w-4 h-4 mr-2" />Get Pairing Code</>
+              <><KeyRound className="w-4 h-4 mr-2" />Request Pairing Code</>
             )}
           </Button>
-        </>
+        </div>
       )}
 
       <HowItWorks method={method} status={state.status} />
@@ -217,19 +215,19 @@ export function WhatsAppAuth({ accountId, onSummaryChange }: WhatsAppAuthProps) 
 
 function StatusBanner({ state }: { state: WhatsAppState }) {
   const map: Record<string, { bg: string; icon: React.ReactNode; label: string; sub: string }> = {
-    disconnected: { bg: "bg-secondary/50",   icon: <WifiOff className="w-4 h-4 text-muted-foreground" />,           label: "Not connected",      sub: "Choose a login method and connect below." },
-    connecting:   { bg: "bg-amber-500/10",   icon: <RefreshCw className="w-4 h-4 text-amber-500 animate-spin" />,   label: "Connecting…",        sub: "Establishing connection to WhatsApp." },
-    qr_ready:     { bg: "bg-primary/10",     icon: <QrCode className="w-4 h-4 text-primary" />,                     label: "Scan QR Code",       sub: "Open WhatsApp on your phone and scan the code below." },
-    pairing:      { bg: "bg-primary/10",     icon: <KeyRound className="w-4 h-4 text-primary" />,                   label: "Pairing code ready", sub: "Enter the code in WhatsApp on your phone." },
-    connected:    { bg: "bg-primary/10",     icon: <CheckCircle className="w-4 h-4 text-primary" />,                label: `Connected${state.phone ? ` · +${state.phone}` : ""}`, sub: "WhatsApp is linked and ready." },
+    disconnected: { bg: "bg-white/5 border-white/5",   icon: <WifiOff className="w-5 h-5 text-muted-foreground" />,           label: "System Offline",      sub: "Awaiting authentication signal." },
+    connecting:   { bg: "bg-amber-500/10 border-amber-500/20",   icon: <RefreshCw className="w-5 h-5 text-amber-500 animate-spin" />,   label: "Initializing…",        sub: "Connecting to secure relay." },
+    qr_ready:     { bg: "bg-primary/10 border-primary/20",     icon: <QrCode className="w-5 h-5 text-primary" />,                     label: "QR Ready",       sub: "Handshake requested. Scan now." },
+    pairing:      { bg: "bg-primary/10 border-primary/20",     icon: <KeyRound className="w-5 h-5 text-primary" />,                   label: "Code Issued", sub: "Input pairing token on device." },
+    connected:    { bg: "bg-primary/10 border-primary/30",     icon: <CheckCircle className="w-5 h-5 text-primary" />,                label: "Terminal Active", sub: state.phone ? `+${state.phone} Linked Successfully` : "Ready for transmission" },
   };
   const cfg = map[state.status] ?? map.disconnected;
   return (
-    <div className={`flex items-start gap-3 p-4 rounded-lg ${cfg.bg}`}>
+    <div className={`flex items-start gap-4 p-5 rounded-xl border backdrop-blur-md ${cfg.bg}`}>
       <div className="mt-0.5">{cfg.icon}</div>
       <div>
-        <p className="font-medium text-sm">{cfg.label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{state.error ?? cfg.sub}</p>
+        <p className="font-bold text-sm uppercase tracking-wider text-white">{cfg.label}</p>
+        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{state.error ?? cfg.sub}</p>
       </div>
     </div>
   );
@@ -242,70 +240,76 @@ function QRView({ qrCode, canvasRef, onRefresh, onDisconnect }: {
   onDisconnect: () => void;
 }) {
   return (
-    <Card className="p-6">
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-sm font-medium text-muted-foreground">Scan with WhatsApp on your phone</p>
-        <div className="p-3 bg-white rounded-xl shadow-md relative">
-          {qrCode?.startsWith("data:") ? (
-            <Image src={qrCode} alt="WhatsApp QR Code" width={280} height={280} unoptimized className="block" />
-          ) : qrCode ? (
-            <canvas ref={canvasRef} width={280} height={280} style={{ display: "block" }} />
-          ) : (
-            // qrCode is null but status is still qr_ready — means QR was just scanned,
-            // server cleared qrCode while completing the handshake. Show connecting UI.
-            <div className="w-[280px] h-[280px] flex flex-col items-center justify-center gap-3">
-              <RefreshCw className="w-8 h-8 animate-spin text-green-600" />
-              <p className="text-sm font-medium text-green-700">QR scanned — connecting…</p>
-              <p className="text-xs text-gray-500 text-center px-4">Keep this page open. WhatsApp is verifying your device.</p>
-            </div>
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground text-center max-w-xs">QR codes expire after ~60 seconds. Click Refresh to get a new one.</p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onRefresh}><RefreshCw className="w-3 h-3 mr-1" /> Refresh</Button>
-          <Button variant="ghost" size="sm" onClick={onDisconnect}><WifiOff className="w-3 h-3 mr-1" /> Cancel</Button>
-        </div>
+    <div className="flex flex-col items-center gap-6 py-4">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Scan via WhatsApp &gt; Linked Devices</p>
+      <div className="p-4 bg-white rounded-2xl shadow-[0_0_50px_rgba(255,153,0,0.15)] border-4 border-primary/20">
+        {qrCode?.startsWith("data:") ? (
+          <Image src={qrCode} alt="QR" width={280} height={280} unoptimized className="block mix-blend-multiply" />
+        ) : qrCode ? (
+          <canvas ref={canvasRef} width={280} height={280} style={{ display: "block" }} className="mix-blend-multiply" />
+        ) : (
+          <div className="w-[280px] h-[280px] flex flex-col items-center justify-center gap-4 text-black">
+            <RefreshCw className="w-10 h-10 animate-spin text-primary" />
+            <p className="font-bold text-sm">FINALIZING...</p>
+          </div>
+        )}
       </div>
-    </Card>
+      <div className="flex gap-3">
+        <Button variant="outline" size="sm" className="btn-glow font-bold uppercase text-[10px] tracking-widest bg-black/40 border-white/10" onClick={onRefresh}>
+          <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
+        </Button>
+        <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground" onClick={onDisconnect}>
+          <WifiOff className="w-3.5 h-3.5 mr-1.5" /> Abort
+        </Button>
+      </div>
+    </div>
   );
 }
 
 function PairingCodeView({ code, onRetry, onDisconnect }: { code: string | null; onRetry: () => void; onDisconnect: () => void }) {
   return (
-    <Card className="p-6">
-      <div className="flex flex-col items-center gap-5 text-center">
-        <div className="p-3 rounded-full bg-primary/10"><KeyRound className="w-8 h-8 text-primary" /></div>
-        <div>
-          <p className="font-semibold text-base mb-1">Enter this code in WhatsApp</p>
-          <p className="text-sm text-muted-foreground">WhatsApp → ⋮ Menu → <strong>Linked Devices → Link with phone number</strong></p>
-        </div>
-        <div className="flex items-center justify-center px-6 py-4 rounded-xl bg-secondary border border-border min-w-[200px]">
-          {code
-            ? <span className="font-mono text-4xl font-bold tracking-[0.25em] text-foreground select-all">{code}</span>
-            : <RefreshCw className="w-7 h-7 animate-spin text-muted-foreground" />}
-        </div>
-        <p className="text-xs text-muted-foreground max-w-xs">Valid for ~60 seconds. Click Try again if it expires.</p>
-        <div className="flex gap-2 flex-wrap justify-center">
-          <Button variant="outline" size="sm" onClick={onRetry}><RefreshCw className="w-3 h-3 mr-1" /> Try again</Button>
-          <Button variant="ghost" size="sm" onClick={onDisconnect}><WifiOff className="w-3 h-3 mr-1" /> Cancel</Button>
-        </div>
+    <div className="flex flex-col items-center gap-6 py-6 text-center">
+      <div className="p-4 rounded-full bg-primary/10 border border-primary/20"><KeyRound className="w-8 h-8 text-primary" /></div>
+      <div className="space-y-1">
+        <p className="font-bold text-lg">Input Verification Token</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Linked Devices &gt; Link with phone number</p>
       </div>
-    </Card>
+      <div className="flex items-center justify-center px-10 py-6 rounded-2xl bg-black/40 border border-white/10 shadow-[0_0_30px_rgba(255,153,0,0.05)]">
+        {code
+          ? <span className="font-mono text-5xl font-black tracking-[0.3em] text-primary select-all">{code}</span>
+          : <RefreshCw className="w-8 h-8 animate-spin text-primary" />}
+      </div>
+      <div className="flex gap-3">
+        <Button variant="outline" size="sm" className="btn-glow font-bold uppercase text-[10px] tracking-widest bg-black/40 border-white/10" onClick={onRetry}>
+          <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> New Token
+        </Button>
+        <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground" onClick={onDisconnect}>
+          <WifiOff className="w-3.5 h-3.5 mr-1.5" /> Cancel
+        </Button>
+      </div>
+    </div>
   );
 }
 
 function ConnectedView({ phone, onDisconnect }: { phone: string | null; onDisconnect: () => void }) {
   return (
-    <Card className="p-6">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <div className="p-4 rounded-full bg-primary/10"><CheckCircle className="w-10 h-10 text-primary" /></div>
-        <div>
-          <p className="text-lg font-semibold">WhatsApp Connected!</p>
-          {phone && <p className="text-sm text-muted-foreground mt-1">Logged in as +{phone}</p>}
+    <div className="flex flex-col items-center gap-6 py-8 text-center">
+      <div className="relative">
+        <div className="p-6 rounded-full bg-primary/10 border border-primary/20">
+          <CheckCircle className="w-12 h-12 text-primary" />
         </div>
-        <Button variant="outline" size="sm" onClick={onDisconnect}><WifiOff className="w-4 h-4 mr-2" /> Disconnect</Button>
+        <div className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-background border border-primary/30">
+          <Wifi className="w-4 h-4 text-primary animate-pulse" />
+        </div>
       </div>
-    </Card>
+      <div className="space-y-1">
+        <p className="text-xl font-black tracking-tight">TERMINAL LINKED</p>
+        {phone && <p className="font-mono text-sm text-primary font-bold">+{phone}</p>}
+      </div>
+      <Button variant="outline" size="sm" className="font-bold uppercase text-[10px] tracking-widest border-white/10 hover:border-destructive hover:text-destructive transition-all" onClick={onDisconnect}>
+        <WifiOff className="w-4 h-4 mr-2" /> Terminate Link
+      </Button>
+    </div>
   );
 }
 

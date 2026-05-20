@@ -1,0 +1,12 @@
+2026/05/20-18:09:14.200 17e7 Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session-main/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/20-18:09:14.201 17e7 Recovering log #19
+2026/05/20-18:09:14.300 17e7 Reusing old log /home/silas/Desktop/QWISO/data/sessions/session-main/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000019.log 
+2026/05/20-18:09:19.081 17e7 Level-0 table #24: started
+2026/05/20-18:09:19.106 17e7 Level-0 table #24: 1227711 bytes OK
+2026/05/20-18:09:19.114 17e7 Delete type=0 #19
+2026/05/20-18:09:28.524 17e7 Compacting 1@1 + 1@2 files
+2026/05/20-18:09:28.592 17e7 Generated table #25@1: 50434 keys, 1818644 bytes
+2026/05/20-18:09:28.593 17e7 Compacted 1@1 + 1@2 files => 1818644 bytes
+2026/05/20-18:09:28.596 17e7 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/05/20-18:09:28.597 17e7 Delete type=2 #21
+2026/05/20-18:09:28.597 17e7 Delete type=2 #24

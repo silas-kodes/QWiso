@@ -1,0 +1,14 @@
+2026/05/10-01:54:25.960 9b3b Creating DB /home/silas/Desktop/QWISO/data/sessions/session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb since it was missing.
+2026/05/10-01:54:25.967 9b3b Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/10-01:54:40.685 9b3b Level-0 table #5: started
+2026/05/10-01:54:40.705 9b3b Level-0 table #5: 1050450 bytes OK
+2026/05/10-01:54:40.710 9b3b Delete type=0 #3
+2026/05/10-01:54:51.595 9b39 Level-0 table #7: started
+2026/05/10-01:54:51.613 9b39 Level-0 table #7: 1151733 bytes OK
+2026/05/10-01:54:51.617 9b39 Delete type=0 #4
+2026/05/10-01:54:51.618 9b3b Compacting 1@1 + 1@2 files
+2026/05/10-01:54:51.653 9b3b Generated table #8@1: 27917 keys, 1034860 bytes
+2026/05/10-01:54:51.653 9b3b Compacted 1@1 + 1@2 files => 1034860 bytes
+2026/05/10-01:54:51.656 9b3b compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/05/10-01:54:51.656 9b3b Delete type=2 #5
+2026/05/10-01:54:51.656 9b3b Delete type=2 #7

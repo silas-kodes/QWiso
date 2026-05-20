@@ -1,0 +1,5 @@
+2026/05/10-03:01:24.395 df47 Creating DB /home/silas/Desktop/QWISO/data/sessions/session-wa_1778371283054/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb since it was missing.
+2026/05/10-03:01:24.402 df47 Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session-wa_1778371283054/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/10-03:02:20.002 df45 Level-0 table #5: started
+2026/05/10-03:02:20.026 df45 Level-0 table #5: 1042496 bytes OK
+2026/05/10-03:02:20.030 df45 Delete type=0 #3

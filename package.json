@@ -15,10 +15,13 @@
     "install:all": "npm install --omit=none && cd backend && npm install --omit=none && cd ../frontend && npm install --omit=none",
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "cd backend && npm run lint",
-    "lint:frontend": "cd frontend && npm run lint"
+    "lint:frontend": "cd frontend && npm run lint",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wrangler": "^4.93.0"
   },
   "engines": {
     "node": ">=18.0.0"

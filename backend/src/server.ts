@@ -39,7 +39,11 @@ const server = createServer(app);
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Support multiple comma-separated origins, e.g.:
+//   CORS_ORIGIN=https://qwiso.silaskodes.workers.dev,http://localhost:5173
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean);
 
 // Trust proxy (for Caddy/Nginx behind-the-scenes)
 app.set('trust proxy', 1);
@@ -50,11 +54,22 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS
+// CORS — allow configured origins with credentials and common methods/headers
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. server-to-server, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin '${origin}' not allowed`));
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
 }));
+
+// Handle preflight requests for all routes
+app.options('*', cors());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -127,7 +142,7 @@ server.listen(PORT, async () => {
 ╠════════════════════════════════════════════════════════╣
 ║  Environment: ${NODE_ENV.padEnd(40)} ║
 ║  Port:       ${PORT.toString().padEnd(40)} ║
-║  CORS:       ${CORS_ORIGIN.padEnd(40)} ║
+║  CORS:       ${allowedOrigins.join(', ').padEnd(40)} ║
 ╚════════════════════════════════════════════════════════╝
   `);
 

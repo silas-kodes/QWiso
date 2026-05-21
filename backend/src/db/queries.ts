@@ -224,7 +224,22 @@ export function updateNumberStatus(
     }
   }
 
-  const group = recipientGroup ?? (status === 'valid' ? 'campaign' : status === 'pending' || status === 'checking' ? 'unclassified' : 'excluded');
+  const defaultGroup = status === 'valid'
+    ? 'campaign'
+    : status === 'pending' || status === 'checking'
+      ? 'unclassified'
+      : 'excluded';
+
+  let group = recipientGroup ?? defaultGroup;
+
+  // Prevent any non-valid number from being assigned to campaign targets.
+  if (status !== 'valid' && group === 'campaign') {
+    group = 'excluded';
+  }
+  if ((status === 'invalid' || status === 'error') && group !== 'excluded') {
+    group = 'excluded';
+  }
+
   const stmt = db.prepare(`
     UPDATE numbers
     SET wa_status = ?, wa_checked_at = ?, wa_error = ?, recipient_group = ?
@@ -398,6 +413,9 @@ export interface Campaign {
   dataset_name?: string;
   platform: string;
   message_template: string;
+  image_data?: string | null;
+  image_mime_type?: string | null;
+  image_filename?: string | null;
   status: string;
   scheduled_at: number | null;
   wa_account_ids: string | null;
@@ -413,8 +431,8 @@ export interface Campaign {
 
 export function createCampaign(campaign: Omit<Campaign, 'created_at' | 'updated_at' | 'status' | 'total_contacts' | 'sent_contacts' | 'failed_contacts' | 'last_processed_index' | 'last_error'>): void {
   const stmt = db.prepare(`
-    INSERT INTO campaigns (id, name, dataset_id, platform, message_template, scheduled_at, wa_account_ids, rate_per_hour)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO campaigns (id, name, dataset_id, platform, message_template, image_data, image_mime_type, image_filename, scheduled_at, wa_account_ids, rate_per_hour)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     campaign.id,
@@ -422,6 +440,9 @@ export function createCampaign(campaign: Omit<Campaign, 'created_at' | 'updated_
     campaign.dataset_id,
     campaign.platform,
     campaign.message_template,
+    campaign.image_data || null,
+    campaign.image_mime_type || null,
+    campaign.image_filename || null,
     campaign.scheduled_at,
     campaign.wa_account_ids,
     campaign.rate_per_hour

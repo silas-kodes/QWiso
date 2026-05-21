@@ -13,6 +13,7 @@ import {
   incrementCampaignFailed,
   setCampaignTotalContacts,
   getValidCountForDataset,
+  type NumberRecord,
 } from '../db/queries.js';
 import { campaignReceiptEvents, getWhatsAppManager, type MessageReceiptEvent } from '../wvalidator/client.js';
 import { sendSingleSms } from '../sms/textbee.js';
@@ -165,6 +166,7 @@ async function dispatchWhatsAppMessage(
   numberId: string,
   digits: string,
   message: string,
+  image?: { data: string; mimeType: string; filename?: string },
 ): Promise<void> {
   const waAccount = pickNextAccount();
   if (!waAccount) {
@@ -176,7 +178,7 @@ async function dispatchWhatsAppMessage(
     throw new CampaignPausedError(`WhatsApp session ${waAccount.id} is not ready.`, 0);
   }
 
-  const dispatch = instance.dispatchMessage(digits, message);
+  const dispatch = instance.dispatchMessage(digits, message, image);
 
   // Delivery receipts and late network failures are deliberately handled outside
   // the main campaign loop so a slow acknowledgement cannot block the queue.
@@ -247,7 +249,14 @@ export async function runCampaignJob(campaignId: string, cancelToken: CancelToke
               if (!hasReadyWhatsAppSession()) {
                 throw new CampaignPausedError('WhatsApp session disconnected before dispatch.', lastProcessedIndex);
               }
-              await dispatchWhatsAppMessage(campaignId, num.id, num.digits, message);
+              const image = campaign.image_data
+                ? {
+                    data: campaign.image_data,
+                    mimeType: campaign.image_mime_type ?? 'image/jpeg',
+                    filename: campaign.image_filename ?? 'image',
+                  }
+                : undefined;
+              await dispatchWhatsAppMessage(campaignId, num.id, num.digits, message, image);
             }
 
             sentCount++;

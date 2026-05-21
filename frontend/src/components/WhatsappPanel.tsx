@@ -44,6 +44,24 @@ interface BulkResult {
 
 type Tab = 'status' | 'single' | 'bulk'
 
+const MAX_IMAGE_SIZE = 8 * 1024 * 1024
+
+async function fileToDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') resolve(reader.result)
+      else reject(new Error('Unable to read image file'))
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('Unable to read image file'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function isImageFile(file: File) {
+  return file.type.startsWith('image/')
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -185,17 +203,65 @@ function RotationStatusTab() {
 function SingleSendTab() {
   const [recipient, setRecipient] = useState('')
   const [message, setMessage] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ success: boolean; error?: string } | null>(null)
 
+  const handleImageChange = (file: File | null) => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    setImageError(null)
+    if (!file) {
+      setImageFile(null)
+      setImagePreview(null)
+      return
+    }
+
+    if (!isImageFile(file)) {
+      setImageError('Only image files are supported.')
+      setImageFile(null)
+      setImagePreview(null)
+      return
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setImageError('Image is too large. Please choose an image under 8MB.')
+      setImageFile(null)
+      setImagePreview(null)
+      return
+    }
+
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
   const send = async () => {
-    if (!recipient.trim() || !message.trim()) return
+    if (!recipient.trim() || (!message.trim() && !imageFile)) return
     setSending(true)
     setResult(null)
     try {
+      const body: Record<string, unknown> = {
+        recipient: recipient.trim(),
+      }
+
+      if (message.trim()) {
+        body.message = message.trim()
+      }
+
+      if (imageFile) {
+        body.image = {
+          data: await fileToDataURL(imageFile),
+          mimeType: imageFile.type,
+          filename: imageFile.name,
+        }
+      }
+
       const data = await apiFetch<{ success: boolean; error?: string }>(`${API}/send`, {
         method: 'POST',
-        body: JSON.stringify({ recipient: recipient.trim(), message: message.trim() }),
+        body: JSON.stringify(body),
       })
       setResult({ success: data.success, error: data.error })
     } catch (e) {
@@ -235,7 +301,33 @@ function SingleSendTab() {
         />
         <div className="flex justify-between text-xs text-pf-text-dim mt-1">
           <span>{message.length}/1600 characters</span>
+          <span>{imageFile ? 'Image attached' : 'Image optional'}</span>
         </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-xs font-medium text-pf-text-muted">Image attachment</label>
+          {imageFile && (
+            <button
+              type="button"
+              onClick={() => handleImageChange(null)}
+              className="text-xs text-pf-accent hover:text-white"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageChange(e.target.files?.[0] ?? null)}
+          className="w-full text-sm text-pf-text-muted"
+        />
+        {imageError && <p className="text-xs text-pf-error mt-1">{imageError}</p>}
+        {imagePreview && (
+          <img src={imagePreview} alt="Attachment preview" className="mt-3 rounded-xl border border-pf-border max-h-40 object-contain" />
+        )}
       </div>
 
       <AnimatePresence>
@@ -262,7 +354,7 @@ function SingleSendTab() {
 
       <button
         onClick={send}
-        disabled={sending || !recipient.trim() || !message.trim()}
+        disabled={sending || !recipient.trim() || (!message.trim() && !imageFile)}
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-pf-accent hover:bg-pf-accent-glow text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {sending ? (
@@ -284,6 +376,9 @@ interface BulkSendProps {
 function BulkSendTab({ initialNumbers = '' }: BulkSendProps) {
   const [rawNumbers, setRawNumbers] = useState(initialNumbers)
   const [message, setMessage] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<BulkResult | null>(null)
 
@@ -292,14 +387,55 @@ function BulkSendTab({ initialNumbers = '' }: BulkSendProps) {
     .map((n) => n.trim())
     .filter((n) => n.length > 0)
 
+  const handleImageChange = (file: File | null) => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    setImageError(null)
+    if (!file) {
+      setImageFile(null)
+      setImagePreview(null)
+      return
+    }
+
+    if (!isImageFile(file)) {
+      setImageError('Only image files are supported.')
+      setImageFile(null)
+      setImagePreview(null)
+      return
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setImageError('Image is too large. Please choose an image under 8MB.')
+      setImageFile(null)
+      setImagePreview(null)
+      return
+    }
+
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
   const send = async () => {
-    if (recipients.length === 0 || !message.trim()) return
+    if (recipients.length === 0 || (!message.trim() && !imageFile)) return
     setSending(true)
     setResult(null)
     try {
+      const body: Record<string, unknown> = { recipients }
+      if (message.trim()) {
+        body.message = message.trim()
+      }
+      if (imageFile) {
+        body.image = {
+          data: await fileToDataURL(imageFile),
+          mimeType: imageFile.type,
+          filename: imageFile.name,
+        }
+      }
+
       const data = await apiFetch<BulkResult>(`${API}/send-bulk`, {
         method: 'POST',
-        body: JSON.stringify({ recipients, message: message.trim() }),
+        body: JSON.stringify(body),
       })
       setResult(data)
     } catch (e) {
@@ -350,7 +486,35 @@ function BulkSendTab({ initialNumbers = '' }: BulkSendProps) {
           placeholder="Type your broadcast message..."
           className="w-full bg-pf-surface border border-pf-border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-pf-text-dim focus:border-pf-accent transition-colors resize-none"
         />
-        <p className="text-xs text-pf-text-dim mt-1">{message.length}/1600</p>
+        <div className="flex justify-between text-xs text-pf-text-dim mt-1">
+          <span>{message.length}/1600</span>
+          <span>{imageFile ? 'Image attached' : 'Image optional'}</span>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-xs font-medium text-pf-text-muted">Image attachment</label>
+          {imageFile && (
+            <button
+              type="button"
+              onClick={() => handleImageChange(null)}
+              className="text-xs text-pf-accent hover:text-white"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleImageChange(e.target.files?.[0] ?? null)}
+          className="w-full text-sm text-pf-text-muted"
+        />
+        {imageError && <p className="text-xs text-pf-error mt-1">{imageError}</p>}
+        {imagePreview && (
+          <img src={imagePreview} alt="Attachment preview" className="mt-3 rounded-xl border border-pf-border max-h-40 object-contain" />
+        )}
       </div>
 
       <AnimatePresence>

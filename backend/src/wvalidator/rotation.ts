@@ -18,7 +18,7 @@ import { broadcastToClients } from '../websocket.js';
 
 const ROTATION_RULES = {
   /** Maximum number-existence checks one account may do per rolling hour. */
-  MAX_CHECKS_PER_HOUR: 200,
+  MAX_CHECKS_PER_HOUR: 100,
 
   /** Hard cap per session (restart required to reset). */
   MAX_CHECKS_PER_SESSION: 2000,
@@ -33,13 +33,13 @@ const ROTATION_RULES = {
   MAX_COOLDOWN_MS: 20 * 60_000, // 20 min
 
   /** Min jitter delay between checks (ms). */
-  JITTER_MIN_MS: 1_200,
+  JITTER_MIN_MS: 2_500,
 
   /** Max jitter delay between checks (ms). */
-  JITTER_MAX_MS: 4_500,
+  JITTER_MAX_MS: 6_000,
 
   /** Extra sleep between account-rotation switches (ms). */
-  ROTATION_PAUSE_MS: 3_000,
+  ROTATION_PAUSE_MS: 4_000,
 
   /** Error-rate threshold (0–1) above which account is considered unhealthy. */
   UNHEALTHY_ERROR_RATE_THRESHOLD: 0.35,
@@ -48,7 +48,7 @@ const ROTATION_RULES = {
   ERROR_RATE_LOOKBACK: 20,
 
   /** Minimum time (ms) to leave an account "at rest" before reusing it. */
-  MIN_REST_BETWEEN_USES_MS: 8_000,
+  MIN_REST_BETWEEN_USES_MS: 15_000,
 } as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -65,6 +65,7 @@ export interface AccountStats {
   cooldownCount: number;  // how many times cooled down so far
   health: AccountHealth;
   lastUsedAt: number;     // epoch ms
+  inUse: boolean;
   recentResults: boolean[]; // last N success flags (for error-rate calc)
 }
 
@@ -109,6 +110,7 @@ function getOrCreateStats(id: string, name: string): AccountStats {
       cooldownCount: 0,
       health: 'healthy',
       lastUsedAt: 0,
+      inUse: false,
       recentResults: [],
     });
   }
@@ -182,11 +184,11 @@ function recordResult(s: AccountStats, success: boolean): void {
 function scheduleHourlyReset(): void {
   if (state.hourlyResetTimer) return;
   state.hourlyResetTimer = setInterval(() => {
-    for (const s of state.stats.values()) {
-      s.checksThisHour = 0;
-      s.health = computeHealth(s);
-      broadcastHealth(s);
-    }
+    Array.from(state.stats.values()).forEach((s) => {
+    s.checksThisHour = 0;
+    s.health = computeHealth(s);
+    broadcastHealth(s);
+  });
     console.log('[Rotation] Hourly check quota reset for all accounts.');
   }, 60 * 60 * 1000); // 1 hour
 }
@@ -216,6 +218,7 @@ export function pickNextAccount(): AccountStats | null {
   const eligible = readyInstances
     .map(i => getOrCreateStats(i.id, i.name ?? i.id))
     .filter(s => {
+      if (s.inUse) return false;
       if (s.health === 'exhausted') return false;
       if (s.cooldownUntil > now) return false;
       if (s.checksThisHour >= ROTATION_RULES.MAX_CHECKS_PER_HOUR) return false;
@@ -245,8 +248,15 @@ export function pickNextAccount(): AccountStats | null {
   // Round-robin among the sorted eligible list
   const picked = eligible[state.currentIndex % eligible.length];
   state.currentIndex = (state.currentIndex + 1) % eligible.length;
+  picked.inUse = true;
 
   return picked;
+}
+
+function releaseAccountUsage(accountStats: AccountStats): void {
+  accountStats.inUse = false;
+  accountStats.health = computeHealth(accountStats);
+  broadcastHealth(accountStats);
 }
 
 /**
@@ -281,28 +291,28 @@ export async function rotatedCheck(
 
   const manager = getWhatsAppManager();
   const instance = manager.getInstance(accountStats.id);
-  if (!instance || !instance.isReady()) {
-    // Account became unavailable since we picked it — mark error and retry next tick
-    recordResult(accountStats, false);
-    throw new Error(`Account ${accountStats.id} became unavailable during rotation`);
-  }
 
-  // Enforce minimum rest between uses for this account
-  const timeSinceLastUse = Date.now() - accountStats.lastUsedAt;
-  if (timeSinceLastUse < ROTATION_RULES.MIN_REST_BETWEEN_USES_MS) {
-    await sleep(ROTATION_RULES.MIN_REST_BETWEEN_USES_MS - timeSinceLastUse);
-  }
-
-  // Human-like jitter before each check
-  await sleep(jitter());
-
-  // Actually execute the check
-  accountStats.lastUsedAt = Date.now();
-  accountStats.checksThisHour++;
-  accountStats.checksThisSession++;
-
-  let valid = false;
+  // Execute the check with account lifecycle cleanup in all cases.
   try {
+    if (!instance || !instance.isReady()) {
+      // Account became unavailable since we picked it — mark error and retry next tick
+      recordResult(accountStats, false);
+      throw new Error(`Account ${accountStats.id} became unavailable during rotation`);
+    }
+
+    // Enforce minimum rest between uses for this account
+    const timeSinceLastUse = Date.now() - accountStats.lastUsedAt;
+    if (timeSinceLastUse < ROTATION_RULES.MIN_REST_BETWEEN_USES_MS) {
+      await sleep(ROTATION_RULES.MIN_REST_BETWEEN_USES_MS - timeSinceLastUse);
+    }
+
+    // Human-like jitter before each check
+    await sleep(jitter());
+
+    // Actually execute the check
+    accountStats.lastUsedAt = Date.now();
+    accountStats.checksThisHour++;
+    accountStats.checksThisSession++;
 
     const result = await Promise.race([
       instance.checkNumberExists(digits),
@@ -311,14 +321,16 @@ export async function rotatedCheck(
       ),
     ]);
 
-    valid = result as boolean;
     recordResult(accountStats, true);
+    return { valid: result as boolean, accountId: accountStats.id };
   } catch (err) {
     recordResult(accountStats, false);
     throw err;
+  } finally {
+    // Keep accounts on a short pause after each check to avoid bursty reuse.
+    await sleep(ROTATION_RULES.ROTATION_PAUSE_MS);
+    releaseAccountUsage(accountStats);
   }
-
-  return { valid, accountId: accountStats.id };
 }
 
 /**

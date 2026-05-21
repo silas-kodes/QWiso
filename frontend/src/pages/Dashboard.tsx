@@ -110,7 +110,7 @@ export function Dashboard() {
               >
                 <Database className="w-6 h-6 text-pf-accent mb-2" />
                 <p className="text-sm font-medium text-white">View Datasets</p>
-                <p className="text-xs text-pf-text-muted">Browse all generated numbers</p>
+                <p className="text-xs text-pf-text-muted">Browse verified contact datasets</p>
               </button>
               
               <button

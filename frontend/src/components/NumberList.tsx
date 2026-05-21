@@ -112,7 +112,7 @@ export function NumberList({ datasetId, datasetName, onBack }: NumberListProps) 
           <div>
             <h2 className="text-xl font-bold text-white">{datasetName}</h2>
             <p className="text-sm text-pf-text-muted">
-              {totalCount.toLocaleString()} numbers • Page {page} of {Math.max(1, totalPages)}
+              {totalCount.toLocaleString()} contacts • Page {page} of {Math.max(1, totalPages)}
             </p>
           </div>
         </div>

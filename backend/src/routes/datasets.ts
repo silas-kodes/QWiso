@@ -87,7 +87,7 @@ router.post('/generate', (req, res) => {
     
     // Create dataset
     const datasetId = createDataset(
-      `${country.flag} ${country.name} - ${options.quantity} numbers`,
+      `${country.flag} ${country.name} - ${options.quantity} contacts`,
       country.code,
       country.name,
       country.dial,

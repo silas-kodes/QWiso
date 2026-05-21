@@ -4,7 +4,7 @@
  */
 
 import WhatsAppWeb from 'whatsapp-web.js';
-const { Client, LocalAuth } = WhatsAppWeb;
+const { Client, LocalAuth, MessageMedia } = WhatsAppWeb;
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -292,12 +292,20 @@ class WhatsAppInstance {
     return await this.client.isRegisteredUser(chatId);
   }
 
-  async sendMessage(phone: string, text: string): Promise<boolean> {
+  async sendMessage(phone: string, text: string, image?: { data: string; mimeType: string; filename?: string }): Promise<boolean> {
     if (!this.isReady() || !this.client) throw new Error(`WhatsApp client ${this.id} not ready`);
     const cleaned = phone.replace(/\D/g, '');
     const chatId = `${cleaned}@c.us`;
     try {
-      await this.client.sendMessage(chatId, text);
+      if (image) {
+        const payload = image.data.replace(/^data:[^;]+;base64,/, '');
+        const media = new MessageMedia(image.mimeType, payload, image.filename ?? 'image');
+        await this.client.sendMessage(chatId, media, {
+          caption: text?.trim() ? text.trim() : undefined,
+        });
+      } else {
+        await this.client.sendMessage(chatId, text);
+      }
       return true;
     } catch (err) {
       console.error(`[WA:${this.id}] Error sending message to ${chatId}:`, err);
@@ -305,10 +313,21 @@ class WhatsAppInstance {
     }
   }
 
-  dispatchMessage(phone: string, text: string): Promise<{ messageId: string; to: string }> {
+  dispatchMessage(phone: string, text: string, image?: { data: string; mimeType: string; filename?: string }): Promise<{ messageId: string; to: string }> {
     if (!this.isReady() || !this.client) throw new Error(`WhatsApp client ${this.id} not ready`);
     const cleaned = phone.replace(/\D/g, '');
     const chatId = `${cleaned}@c.us`;
+
+    if (image) {
+      const payload = image.data.replace(/^data:[^;]+;base64,/, '');
+      const media = new MessageMedia(image.mimeType, payload, image.filename ?? 'image');
+      return this.client.sendMessage(chatId, media, {
+        caption: text?.trim() ? text.trim() : undefined,
+      }).then((msg: any) => ({
+        messageId: msg?.id?._serialized ?? msg?.id?.id ?? `${this.id}:${cleaned}:${Date.now()}`,
+        to: cleaned,
+      }));
+    }
 
     return this.client.sendMessage(chatId, text).then((msg: any) => ({
       messageId: msg?.id?._serialized ?? msg?.id?.id ?? `${this.id}:${cleaned}:${Date.now()}`,

@@ -1,3 +1,3 @@
-2026/05/20-18:09:13.569 180f Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Local Storage/leveldb/MANIFEST-000001
-2026/05/20-18:09:13.576 180f Recovering log #7
-2026/05/20-18:09:13.577 180f Reusing old log /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Local Storage/leveldb/000007.log 
+2026/05/20-23:43:23.435 825b Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Local Storage/leveldb/MANIFEST-000001
+2026/05/20-23:43:23.440 825b Recovering log #10
+2026/05/20-23:43:23.441 825b Reusing old log /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Local Storage/leveldb/000010.log 

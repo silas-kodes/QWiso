@@ -116,7 +116,10 @@ CREATE TABLE IF NOT EXISTS campaigns (
   name TEXT NOT NULL,
   dataset_id TEXT NOT NULL,
   platform TEXT NOT NULL DEFAULT 'whatsapp', -- 'whatsapp' or 'sms'
-  message_template TEXT NOT NULL,
+  message_template TEXT,
+  image_data TEXT,
+  image_mime_type TEXT,
+  image_filename TEXT,
   status TEXT DEFAULT 'pending',    -- pending, scheduled, running, paused, completed, failed
   scheduled_at INTEGER,
   wa_account_ids TEXT,              -- JSON array of account IDs to rotate through (if platform=whatsapp)
@@ -142,6 +145,15 @@ CREATE TABLE IF NOT EXISTS dead_numbers (
 db.exec(schemaSQL);
 
 // Migration: add tracking columns if missing (for existing databases)
+try {
+  db.exec(`ALTER TABLE campaigns ADD COLUMN image_data TEXT`);
+} catch (_) { /* column already exists */ }
+try {
+  db.exec(`ALTER TABLE campaigns ADD COLUMN image_mime_type TEXT`);
+} catch (_) { /* column already exists */ }
+try {
+  db.exec(`ALTER TABLE campaigns ADD COLUMN image_filename TEXT`);
+} catch (_) { /* column already exists */ }
 try {
   db.exec(`ALTER TABLE campaigns ADD COLUMN total_contacts INTEGER DEFAULT 0`);
 } catch (_) { /* column already exists */ }

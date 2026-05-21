@@ -139,7 +139,7 @@ export function RecentDatasets({ refreshKey }: RecentDatasetsProps) {
                 </div>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="text-pf-text-muted">
-                    {dataset.quantity.toLocaleString()} numbers
+                    {dataset.quantity.toLocaleString()} contacts
                   </span>
                   {getStatusBadge(dataset)}
                 </div>

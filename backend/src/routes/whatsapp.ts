@@ -25,11 +25,20 @@ router.get('/rotation-stats', (_req, res) => {
   res.json(getAllAccountStats());
 });
 
+const imageSchema = z.object({
+  data: z.string().min(1, 'Image base64 data is required'),
+  mimeType: z.string().min(1, 'Image mimeType is required'),
+  filename: z.string().min(1).optional(),
+});
+
 // Send single WhatsApp message (rotated or specific client)
 const sendWaSchema = z.object({
   recipient: z.string().min(7, 'Phone number too short'),
-  message: z.string().min(1).max(1600, 'Message too long'),
+  message: z.string().max(1600, 'Message too long').optional(),
   clientId: z.string().optional(),
+  image: imageSchema.optional(),
+}).refine((val) => Boolean(val.message?.trim() || val.image), {
+  message: 'Either message text or image attachment is required.',
 });
 
 router.post('/send', async (req, res) => {
@@ -40,6 +49,13 @@ router.post('/send', async (req, res) => {
   }
 
   const { recipient, message, clientId } = parse.data;
+  const image = parse.data.image
+    ? {
+        data: parse.data.image.data!,
+        mimeType: parse.data.image.mimeType!,
+        filename: parse.data.image.filename,
+      }
+    : undefined;
   const phone = validateInternationalPhone(recipient);
   if (!phone.ok || !phone.normalized) {
     res.status(400).json({ error: phone.error || 'Invalid international phone number.' });
@@ -69,7 +85,7 @@ router.post('/send', async (req, res) => {
   }
 
   try {
-    const success = await instance.sendMessage(phone.normalized.digits, message);
+    const success = await instance.sendMessage(phone.normalized.digits, message ?? '', image);
     res.json({ success, recipient: phone.normalized.e164 });
   } catch (err) {
     res.status(500).json({
@@ -81,7 +97,10 @@ router.post('/send', async (req, res) => {
 // Send bulk WhatsApp messages (rotated)
 const bulkWaSchema = z.object({
   recipients: z.array(z.string().min(7)).min(1).max(500),
-  message: z.string().min(1).max(1600, 'Message too long'),
+  message: z.string().max(1600, 'Message too long').optional(),
+  image: imageSchema.optional(),
+}).refine((val) => Boolean(val.message?.trim() || val.image), {
+  message: 'Either message text or image attachment is required.',
 });
 
 router.post('/send-bulk', async (req, res) => {
@@ -92,6 +111,13 @@ router.post('/send-bulk', async (req, res) => {
   }
 
   const { recipients, message } = parse.data;
+  const image = parse.data.image
+    ? {
+        data: parse.data.image.data!,
+        mimeType: parse.data.image.mimeType!,
+        filename: parse.data.image.filename,
+      }
+    : undefined;
   const normalizedRecipients = recipients.map(recipient => ({
     raw: recipient,
     phone: validateInternationalPhone(recipient),
@@ -125,7 +151,7 @@ router.post('/send-bulk', async (req, res) => {
     }
 
     try {
-      const success = await instance.sendMessage(recipient, message);
+      const success = await instance.sendMessage(recipient, message ?? '', image);
       if (success) {
         results.push({ success: true, recipient: entry.phone.normalized.e164 });
         sent++;
@@ -204,7 +230,7 @@ router.post('/logout', async (req, res) => {
 const validateSchema = z.object({
   datasetId: z.string().uuid(),
   waClientId: z.string().default('main'),
-  concurrency: z.number().int().min(1).max(20).default(1),
+  concurrency: z.number().int().min(1).max(5).default(1),
   timeoutMs: z.number().int().min(5000).max(120000).default(30000),
   totalCount: z.number().int().positive().optional(),
 });

@@ -131,12 +131,14 @@ export async function runValidationJob(
   const {
     jobId,
     datasetId,
-    batchSize = 100,
-    concurrency = 3,   // keep concurrency moderate — rotation handles distribution
+    batchSize = 25,
+    concurrency = 1,   // default to a conservative validator worker count
     timeoutMs = 30_000,
     onProgress,
     cancelToken,
   } = options;
+
+  const effectiveConcurrency = Math.max(1, Math.min(concurrency, 5));
 
   console.log(`[Validator] Starting validation job ${jobId} for dataset ${datasetId}`);
 
@@ -190,7 +192,7 @@ export async function runValidationJob(
           }
           return validateNumber(num, timeoutMs, isStaffNumber);
         },
-        concurrency,
+        effectiveConcurrency,
         async (result) => {
           processedCount++;
           processedIds.push(result.numberId);
@@ -218,7 +220,7 @@ export async function runValidationJob(
       );
 
       hasMore = numbers.length === batchSize;
-      if (hasMore) await sleep(1_500); // inter-batch pause
+      if (hasMore) await sleep(5_000); // inter-batch pause to avoid burst validation traffic
     }
 
     const completedAt = Math.floor(Date.now() / 1000);

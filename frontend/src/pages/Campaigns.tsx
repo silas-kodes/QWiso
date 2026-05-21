@@ -52,6 +52,9 @@ export function Campaigns() {
   const [datasetId, setDatasetId] = useState('')
   const [platform, setPlatform] = useState<'whatsapp' | 'sms'>('whatsapp')
   const [template, setTemplate] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
   const [maxMessages, setMaxMessages] = useState<number | ''>('')
   const [rateLimitDelay, setRateLimitDelay] = useState(3) // Default 3s delay
   const [submitting, setSubmitting] = useState(false)
@@ -74,6 +77,54 @@ export function Campaigns() {
       }
     }
   }, [location.state])
+
+  const fileToDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') resolve(reader.result)
+        else reject(new Error('Unable to read image file'))
+      }
+      reader.onerror = () => reject(reader.error ?? new Error('Unable to read image file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const isImageFile = (file: File) => file.type.startsWith('image/')
+
+  const resetImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    setImageFile(null)
+    setImagePreview(null)
+    setImageError(null)
+  }
+
+  const handleImageUpload = (file: File | null) => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+    setImageError(null)
+
+    if (!file) {
+      resetImage()
+      return
+    }
+
+    if (!isImageFile(file)) {
+      setImageError('Please upload a valid image file.')
+      resetImage()
+      return
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setImageError('Image must be smaller than 8MB.')
+      resetImage()
+      return
+    }
+
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
 
   // Real-time states from WebSocket Store
   const wsCampaignProgress = useWebSocketStore((state) => state.campaignProgress)
@@ -106,8 +157,13 @@ export function Campaigns() {
   // Create Campaign
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !datasetId || !template) {
-      setError('Please fill in all required fields.')
+    if (!name || !datasetId || (!template && !imageFile)) {
+      setError('Please fill in all required fields or attach an image for WhatsApp campaigns.')
+      return
+    }
+
+    if (platform === 'sms' && !template) {
+      setError('SMS campaigns require a text template.')
       return
     }
 
@@ -115,16 +171,26 @@ export function Campaigns() {
     setError(null)
 
     try {
+      const payload: Record<string, unknown> = {
+        name,
+        dataset_id: datasetId,
+        platform,
+        message_template: template,
+        rate_per_hour: Math.round(3600 / Number(rateLimitDelay)),
+      }
+
+      if (platform === 'whatsapp' && imageFile) {
+        payload.image = {
+          data: await fileToDataURL(imageFile),
+          mimeType: imageFile.type,
+          filename: imageFile.name,
+        }
+      }
+
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          dataset_id: datasetId,
-          platform,
-          message_template: template,
-          rate_per_hour: Math.round(3600 / Number(rateLimitDelay))
-        })
+        body: JSON.stringify(payload),
       })
 
       if (res.ok) {
@@ -154,6 +220,7 @@ export function Campaigns() {
     setDatasetId('')
     setPlatform('whatsapp')
     setTemplate('')
+    resetImage()
     setMaxMessages('')
     setRateLimitDelay(3)
     setError(null)
@@ -477,7 +544,9 @@ export function Campaigns() {
                     <div className="grid grid-cols-2 gap-2 mt-1">
                       <button
                         type="button"
-                        onClick={() => setPlatform('whatsapp')}
+                        onClick={() => {
+                          setPlatform('whatsapp')
+                        }}
                         className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-semibold transition-all ${
                           platform === 'whatsapp'
                             ? 'bg-pf-success/15 border-pf-success text-pf-success shadow-lg shadow-pf-success/5'
@@ -490,7 +559,10 @@ export function Campaigns() {
 
                       <button
                         type="button"
-                        onClick={() => setPlatform('sms')}
+                        onClick={() => {
+                          resetImage()
+                          setPlatform('sms')
+                        }}
                         className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-semibold transition-all ${
                           platform === 'sms'
                             ? 'bg-pf-info/15 border-pf-info text-pf-info shadow-lg shadow-pf-info/5'
@@ -508,7 +580,7 @@ export function Campaigns() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider flex items-center gap-1">
-                      Message Template *
+                      Message Template
                     </label>
                     <span className="text-[10px] text-pf-text-dim flex items-center gap-1">
                       <BookOpen className="w-3 h-3" />
@@ -516,14 +588,49 @@ export function Campaigns() {
                     </span>
                   </div>
                   <textarea
-                    required
                     rows={4}
                     placeholder="Hello {name}! Thank you for joining QWISO. Best regards!"
                     value={template}
                     onChange={(e) => setTemplate(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-pf-surface border border-pf-border text-white focus:border-pf-accent transition-colors font-mono text-sm resize-none"
                   />
+                  <p className="text-[10px] text-pf-text-dim">
+                    Required for SMS. WhatsApp campaigns may omit this if an image is attached.
+                  </p>
                 </div>
+
+                {platform === 'whatsapp' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                        WhatsApp Image Attachment
+                      </label>
+                      {imageFile && (
+                        <button
+                          type="button"
+                          onClick={resetImage}
+                          className="text-[10px] text-pf-accent hover:text-white"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e.target.files?.[0] ?? null)}
+                      className="w-full text-sm text-pf-text-muted"
+                    />
+                    {imageError && <p className="text-xs text-pf-error">{imageError}</p>}
+                    {imagePreview && (
+                      <img
+                        src={imagePreview}
+                        alt="Campaign image preview"
+                        className="mt-2 rounded-xl border border-pf-border max-h-40 object-contain"
+                      />
+                    )}
+                  </div>
+                )}
 
                 {/* Advanced Rate Limits */}
                 <div className="border-t border-pf-border pt-4">

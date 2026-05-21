@@ -161,7 +161,7 @@ export function GeneratorPanel({ onDatasetCreated }: GeneratorPanelProps) {
         ) : (
           <>
             <Zap className="w-5 h-5" />
-            Generate {quantity.toLocaleString()} Numbers
+            Generate {quantity.toLocaleString()} Contacts
           </>
         )}
       </button>
@@ -176,7 +176,7 @@ export function GeneratorPanel({ onDatasetCreated }: GeneratorPanelProps) {
           <div className="flex items-center gap-2 text-pf-success">
             <CheckCircle2 className="w-5 h-5" />
             <span className="font-medium">
-              Generated {success.count.toLocaleString()} numbers
+              Generated {success.count.toLocaleString()} contacts
             </span>
           </div>
           <p className="text-xs text-pf-text-muted mt-1">

@@ -1,3 +1,3 @@
-2026/05/20-18:59:06.649 294d Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Sync Data/LevelDB/MANIFEST-000001
-2026/05/20-18:59:06.651 294d Recovering log #3
-2026/05/20-18:59:06.651 294d Reusing old log /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Sync Data/LevelDB/000003.log 
+2026/05/20-23:46:49.585 84fc Reusing MANIFEST /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Sync Data/LevelDB/MANIFEST-000001
+2026/05/20-23:46:49.587 84fc Recovering log #3
+2026/05/20-23:46:49.587 84fc Reusing old log /home/silas/Desktop/QWISO/data/sessions/session-main/Default/Sync Data/LevelDB/000003.log 

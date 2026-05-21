@@ -29,7 +29,7 @@ export function ValidationPanel() {
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [selectedDataset, setSelectedDataset] = useState('')
   const [selectedAccount, setSelectedAccount] = useState('main')
-  const [concurrency, setConcurrency] = useState(5)
+  const [concurrency, setConcurrency] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
@@ -179,11 +179,14 @@ export function ValidationPanel() {
         <input
           type="range"
           min={1}
-          max={20}
+          max={5}
           value={concurrency}
           onChange={(e) => setConcurrency(Number(e.target.value))}
           className="w-full h-1.5 bg-pf-surface rounded-lg appearance-none cursor-pointer accent-pf-accent"
         />
+        <p className="mt-2 text-[10px] text-pf-text-muted">
+          Keep concurrency low to avoid WhatsApp rate limits and account bans.
+        </p>
       </div>
 
       {/* Status */}

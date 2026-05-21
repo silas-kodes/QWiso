@@ -102,7 +102,7 @@ export function Datasets() {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Datasets</h1>
           <p className="text-pf-text-muted text-sm">
-            Manage your generated number collections
+            Manage your verified contact datasets
           </p>
         </div>
         <button
@@ -149,7 +149,7 @@ export function Datasets() {
                     <div className="flex items-center gap-3 text-xs text-pf-text-muted mt-1">
                       <span>{new Date(dataset.created_at * 1000).toLocaleDateString()}</span>
                       <span>•</span>
-                      <span>{dataset.quantity.toLocaleString()} numbers</span>
+                      <span>{dataset.quantity.toLocaleString()} contacts</span>
                       <span>•</span>
                       <span>{dataset.dial_code}</span>
                     </div>

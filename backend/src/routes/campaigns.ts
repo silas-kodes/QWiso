@@ -7,14 +7,48 @@ import { runCampaignJob } from '../jobs/sender.js';
 
 const router = Router();
 
+const imagePayloadSchema = z.object({
+  data: z.string().min(1),
+  mimeType: z.string().min(1),
+  filename: z.string().min(1).optional(),
+});
+
 const createCampaignSchema = z.object({
   name: z.string().min(1),
   dataset_id: z.string().uuid(),
   platform: z.enum(['whatsapp', 'sms']),
-  message_template: z.string().min(1),
+  message_template: z.string().max(1600).optional(),
+  image: imagePayloadSchema.optional(),
   scheduled_at: z.number().nullable().optional(),
   wa_account_ids: z.array(z.string()).optional(),
   rate_per_hour: z.number().min(1).default(50),
+}).superRefine((val, ctx) => {
+  if (val.platform === 'sms') {
+    if (!val.message_template || !val.message_template.trim()) {
+      ctx.addIssue({
+        path: ['message_template'],
+        code: z.ZodIssueCode.custom,
+        message: 'SMS campaigns require a text message template.',
+      });
+    }
+    if (val.image) {
+      ctx.addIssue({
+        path: ['image'],
+        code: z.ZodIssueCode.custom,
+        message: 'Image attachments are not supported for SMS campaigns.',
+      });
+    }
+  }
+
+  if (val.platform === 'whatsapp') {
+    if ((!val.message_template || !val.message_template.trim()) && !val.image) {
+      ctx.addIssue({
+        path: ['message_template'],
+        code: z.ZodIssueCode.custom,
+        message: 'WhatsApp campaigns require either a message template or an image attachment.',
+      });
+    }
+  }
 });
 
 router.get('/', (_req, res) => {
@@ -33,7 +67,10 @@ router.post('/', (req, res) => {
     name: parse.data.name,
     dataset_id: parse.data.dataset_id,
     platform: parse.data.platform,
-    message_template: parse.data.message_template,
+    message_template: parse.data.message_template ?? '',
+    image_data: parse.data.image?.data ?? null,
+    image_mime_type: parse.data.image?.mimeType ?? null,
+    image_filename: parse.data.image?.filename ?? null,
     scheduled_at: parse.data.scheduled_at || null,
     wa_account_ids: parse.data.wa_account_ids ? JSON.stringify(parse.data.wa_account_ids) : null,
     rate_per_hour: parse.data.rate_per_hour,
@@ -70,7 +107,7 @@ router.post('/:id/start', (req, res) => {
   if (payload.length !== counts.pending) {
     res.status(500).json({
       error: 'Action Hub payload validation failed',
-      message: `Expected ${validCount} validated targets but found ${payload.length}. Campaign launch halted.`,
+      message: `Expected ${counts.pending} validated targets but found ${payload.length}. Campaign launch halted.`,
     });
     return;
   }

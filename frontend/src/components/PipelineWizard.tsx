@@ -122,7 +122,7 @@ export function PipelineWizard() {
 
   // Step 3: Validator States
   const [datasets, setDatasets] = useState<Dataset[]>([])
-  const [concurrency, setConcurrency] = useState(5)
+  const [concurrency, setConcurrency] = useState(1)
   const [valLoading, setValLoading] = useState(false)
   const [valError, setValError] = useState('')
 
@@ -725,7 +725,7 @@ export function PipelineWizard() {
                 {genSuccess && (
                   <div className="p-3 bg-pf-success/15 border border-pf-success/30 text-pf-success text-xs rounded-lg flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    <span>Successfully generated {genSuccess.count} target numbers (Dataset ID: {genSuccess.id.slice(0, 8)})</span>
+                    <span>Successfully generated {genSuccess.count} contact targets (Dataset ID: {genSuccess.id.slice(0, 8)})</span>
                   </div>
                 )}
 
@@ -860,11 +860,14 @@ export function PipelineWizard() {
                     <input
                       type="range"
                       min={1}
-                      max={20}
+                      max={5}
                       value={concurrency}
                       onChange={(e) => setConcurrency(Number(e.target.value))}
                       className="w-full accent-pf-accent h-1.5 bg-pf-bg rounded-lg appearance-none cursor-pointer"
                     />
+                    <p className="mt-2 text-[10px] text-pf-text-dim">
+                      Use lower concurrency for safer WhatsApp validation throughput.
+                    </p>
                   </div>
                   
                   {lastValidationResult && !validationProgress && (

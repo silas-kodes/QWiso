@@ -1,0 +1,53 @@
+[phases.setup]
+nixPkgs = [
+  # Core glib / GObject runtime
+  "glib",
+  # X11 display libraries
+  "xorg.libX11",
+  "xorg.libXrandr",
+  "xorg.libXinerama",
+  "xorg.libXcursor",
+  "xorg.libXdamage",
+  "xorg.libXext",
+  "xorg.libXfixes",
+  "xorg.libXrender",
+  "xorg.libXtst",
+  "xorg.libXScrnSaver",
+  "xorg.libXcomposite",
+  # Wayland / keyboard
+  "libxkbcommon",
+  # Text rendering
+  "pango",
+  "cairo",
+  # Accessibility / image
+  "at-spi2-atk",
+  "gdk-pixbuf",
+  # Font rendering
+  "freetype",
+  "fontconfig",
+  # System / IPC
+  "dbus",
+  "expat",
+  # C++ runtime
+  "gcc-unwrapped",
+  # NSS (needed by Chrome for TLS)
+  "nss",
+  # CUPS (Chrome dependency)
+  "cups",
+  # Additional Chrome deps
+  "alsa-lib",
+  "atk",
+  "gtk3",
+  "mesa",
+  "libdrm",
+  "libgbm",
+]
+
+[phases.install]
+cmds = ["npm run install:all"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm start"

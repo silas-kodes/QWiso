@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { 
   MessageCircle, Users, CalendarClock, Clock, Zap, ShieldCheck, 
-  Database, LayoutDashboard, LogOut, Play, RefreshCw, Send
+  Database, LayoutDashboard, LogOut, Play, RefreshCw, Send, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,9 @@ import { PhoneForge } from "@/components/phone-forge";
 import { LoginComponent } from "@/components/login";
 import { MessagingHub, type MessageChannel } from "@/components/messaging-hub";
 import { UnifiedMessenger } from "@/components/unified-messenger";
+import { StepProgress } from "@/components/step-progress";
+import { InlineAlert } from "@/components/inline-alert";
+import { HelpText } from "@/components/help-text";
 import type { Contact } from "@/lib/excel-parser";
 import type { Template } from "@/lib/templates";
 import type { AccountId, WhatsAppState } from "@/lib/whatsapp";
@@ -155,35 +158,46 @@ export default function Home() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Navigation - The 6 Steps */}
-        <div className="grid grid-cols-6 gap-2 mb-8">
+        {/* Progress Indicator */}
+        <StepProgress
+          steps={[
+            { id: "connect", label: "Connect" },
+            { id: "generate", label: "Generate" },
+            { id: "validate", label: "Validate" },
+            { id: "messaging", label: "Messaging" },
+            { id: "templates", label: "Templates" },
+            { id: "schedule", label: "Schedule" },
+          ]}
+          currentStep={pageTab}
+          completedSteps={[]}
+        />
+
+        {/* Step Navigation */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-8">
           {[
-            { id: "connect", label: "Connect", icon: ShieldCheck },
-            { id: "generate", label: "Generate", icon: Database },
-            { id: "validate", label: "Validate", icon: Zap },
-            { id: "messaging", label: "Messaging", icon: Send },
-            { id: "templates", label: "Templates", icon: LayoutDashboard },
-            { id: "schedule", label: "Schedule", icon: CalendarClock },
-          ].map((step, idx) => {
+            { id: "connect", label: "Connect", icon: ShieldCheck, desc: "Link accounts" },
+            { id: "generate", label: "Generate", icon: Database, desc: "Create numbers" },
+            { id: "validate", label: "Validate", icon: Zap, desc: "Verify numbers" },
+            { id: "messaging", label: "Messaging", icon: Send, desc: "Send messages" },
+            { id: "templates", label: "Templates", icon: LayoutDashboard, desc: "Manage templates" },
+            { id: "schedule", label: "Schedule", icon: CalendarClock, desc: "Schedule campaigns" },
+          ].map((step) => {
             const active = pageTab === step.id;
             const Icon = step.icon;
             return (
               <button
                 key={step.id}
                 onClick={() => setPageTab(step.id as any)}
-                className={`group flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-300 ${
+                className={`group flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-300 ${
                   active 
                     ? "bg-primary/10 border-primary text-primary shadow-[0_0_20px_rgba(255,153,0,0.15)]" 
-                    : "bg-card/50 border-white/5 text-muted-foreground hover:border-white/20 hover:text-white"
+                    : "bg-card/50 border-white/5 text-muted-foreground hover:border-white/20 hover:text-white hover:bg-card/70"
                 }`}
               >
                 <div className={`p-2 rounded-lg transition-colors ${active ? "bg-primary/20" : "bg-white/5 group-hover:bg-white/10"}`}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                 </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[9px] uppercase tracking-widest font-bold opacity-50">Step 0{idx + 1}</span>
-                  <span className="text-xs font-bold">{step.label}</span>
-                </div>
+                <span className="text-xs font-bold leading-tight">{step.label}</span>
               </button>
             );
           })}
@@ -193,6 +207,14 @@ export default function Home() {
         <div className="space-y-6">
           {pageTab === "connect" && (
             <div className="space-y-6">
+              {/* Step Header */}
+              <div className="space-y-2 mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">Connect Your Accounts</h2>
+                <p className="text-muted-foreground">
+                  Link WhatsApp accounts to enable messaging. You can connect up to 2 accounts for load balancing.
+                </p>
+              </div>
+
               <div className="flex justify-end">
                 <Button 
                   onClick={handleStartAll} 
@@ -206,31 +228,53 @@ export default function Home() {
                   )}
                 </Button>
               </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="p-6 glass-panel space-y-4">
+                <Card className="p-6 glass-panel space-y-4 hover:border-primary/30 transition-all">
                   <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-2.5 h-2.5 rounded-full ${waStatuses["account-1"].status === "connected" ? "bg-emerald-500 animate-pulse" : "bg-muted"}`} />
                     <Users className="w-4 h-4 text-primary" />
                     <h3 className="font-bold text-sm uppercase tracking-wider">Primary Account</h3>
                   </div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {waStatuses["account-1"].status === "connected" 
+                      ? `Connected as ${waStatuses["account-1"].phone}`
+                      : "Scan QR code to connect your first WhatsApp account"}
+                  </p>
                   <WhatsAppAuth accountId="account-1" onSummaryChange={() => {}} />
                 </Card>
-                <Card className="p-6 glass-panel space-y-4">
+
+                <Card className="p-6 glass-panel space-y-4 hover:border-accent/30 transition-all">
                   <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-2.5 h-2.5 rounded-full ${waStatuses["account-2"].status === "connected" ? "bg-emerald-500 animate-pulse" : "bg-muted"}`} />
                     <Users className="w-4 h-4 text-accent" />
-                    <h3 className="font-bold text-sm uppercase tracking-wider text-accent">Secondary Account</h3>
+                    <h3 className="font-bold text-sm uppercase tracking-wider text-accent">Secondary Account (Optional)</h3>
                   </div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {waStatuses["account-2"].status === "connected" 
+                      ? `Connected as ${waStatuses["account-2"].phone}`
+                      : "Add a second account for redundancy and load balancing"}
+                  </p>
                   <WhatsAppAuth accountId="account-2" onSummaryChange={() => {}} />
                 </Card>
               </div>
 
+              <HelpText>
+                <p><strong>Why connect multiple accounts?</strong></p>
+                <ul className="list-disc list-inside space-y-1 mt-1">
+                  <li>Distribute message sending load across accounts</li>
+                  <li>Reduce risk of account bans from rate limiting</li>
+                  <li>Automatic failover if one account becomes unavailable</li>
+                </ul>
+              </HelpText>
+
               {anyAccountConnected && (
                 <div className="flex justify-center pt-4">
                   <Button 
-                    variant="outline" 
-                    className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-12 h-12"
                     onClick={() => setPageTab("generate")}
+                    className="btn-glow uppercase tracking-widest font-bold px-12 h-12 gap-2"
                   >
-                    Account Linked - Continue to Step 02 →
+                    Continue to Step 2: Generate <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               )}
@@ -240,18 +284,37 @@ export default function Home() {
 
           {pageTab === "generate" && (
             <div className="max-w-2xl mx-auto space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight">Generate Phone Numbers</h2>
+                <p className="text-muted-foreground">
+                  Create a list of phone numbers to test. Specify country, quantity, and formatting options.
+                </p>
+              </div>
+
               <PhoneForge 
                 mode="generate_only"
                 accountStatuses={waStatuses} 
                 onCreateCampaign={() => setPageTab("validate")} 
               />
-              <div className="flex justify-center">
+
+              <HelpText>
+                <p><strong>What's next?</strong></p>
+                <p>After generating numbers, you'll validate them using your connected WhatsApp accounts to ensure they're active.</p>
+              </HelpText>
+
+              <div className="flex justify-center gap-3">
                 <Button 
-                  variant="outline" 
-                  className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-12 h-12"
-                  onClick={() => setPageTab("validate")}
+                  variant="ghost" 
+                  onClick={() => setPageTab("connect")}
+                  className="text-muted-foreground"
                 >
-                  Skip to Step 03: Validation →
+                  ← Back to Connect
+                </Button>
+                <Button 
+                  onClick={() => setPageTab("validate")}
+                  className="btn-glow gap-2"
+                >
+                  Next: Validate Numbers <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -259,6 +322,13 @@ export default function Home() {
 
           {pageTab === "validate" && (
             <div className="max-w-2xl mx-auto space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight">Validate Phone Numbers</h2>
+                <p className="text-muted-foreground">
+                  Check which numbers are active on WhatsApp. This helps you focus on valid targets.
+                </p>
+              </div>
+
               <PhoneForge 
                 mode="validate_only"
                 accountStatuses={waStatuses} 
@@ -273,20 +343,29 @@ export default function Home() {
                   setPageTab("messaging");
                 }}
               />
+
+              <HelpText>
+                <p><strong>What happens during validation?</strong></p>
+                <ul className="list-disc list-inside space-y-1 mt-1">
+                  <li>Checks if numbers have WhatsApp accounts</li>
+                  <li>Identifies active vs. inactive numbers</li>
+                  <li>Helps optimize your campaign targeting</li>
+                </ul>
+              </HelpText>
+
               <div className="flex justify-center gap-3">
                 <Button 
                   variant="ghost" 
-                  className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]"
-                  onClick={() => setPageTab("templates")}
+                  onClick={() => setPageTab("generate")}
+                  className="text-muted-foreground"
                 >
-                  ← Go to Templates
+                  ← Back to Generate
                 </Button>
                 <Button 
-                  variant="outline" 
-                  className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-8 h-10"
                   onClick={() => setPageTab("messaging")}
+                  className="btn-glow gap-2"
                 >
-                  Continue to Messaging →
+                  Next: Send Messages <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>

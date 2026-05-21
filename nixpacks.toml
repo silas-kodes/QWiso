@@ -1,0 +1,45 @@
+# Nixpacks configuration for Railway backend deployment
+# Provides system dependencies required by Puppeteer/Chrome (via whatsapp-web.js)
+
+[phases.setup]
+nixPkgs = [
+  "nodejs_20",
+  "glib",
+  "nss",
+  "nspr",
+  "atk",
+  "cups",
+  "dbus",
+  "expat",
+  "libdrm",
+  "libxcb",
+  "libxkbcommon",
+  "xorg.libX11",
+  "xorg.libXcomposite",
+  "xorg.libXdamage",
+  "xorg.libXext",
+  "xorg.libXfixes",
+  "xorg.libXrandr",
+  "mesa",
+  "pango",
+  "cairo",
+  "alsa-lib",
+  "chromium",
+]
+
+[phases.install]
+cmds = [
+  "cd backend && npm install --omit=none",
+]
+
+[phases.build]
+cmds = [
+  "cd backend && npm run build",
+]
+
+[start]
+cmd = "cd backend && npm start"
+
+[variables]
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "/run/current-system/sw/bin/chromium"

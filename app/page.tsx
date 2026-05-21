@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { 
   MessageCircle, Users, CalendarClock, Clock, Zap, ShieldCheck, 
-  Database, LayoutDashboard, LogOut, Play, RefreshCw 
+  Database, LayoutDashboard, LogOut, Play, RefreshCw, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { WhatsAppAuth } from "@/components/whatsapp-auth";
 import { TaskScheduler } from "@/components/task-scheduler";
 import { PhoneForge } from "@/components/phone-forge";
 import { LoginComponent } from "@/components/login";
+import { MessagingHub, type MessageChannel } from "@/components/messaging-hub";
+import { UnifiedMessenger } from "@/components/unified-messenger";
 import type { Contact } from "@/lib/excel-parser";
 import type { Template } from "@/lib/templates";
 import type { AccountId, WhatsAppState } from "@/lib/whatsapp";
@@ -52,8 +54,10 @@ function LiveClock() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
-  const [pageTab, setPageTab] = useState<"connect" | "generate" | "validate" | "schedule" | "templates">("connect");
+  const [pageTab, setPageTab] = useState<"connect" | "generate" | "validate" | "messaging" | "templates" | "schedule">("connect");
+  const [messageChannel, setMessageChannel] = useState<MessageChannel | null>(null);
   const [schedulerInitial, setSchedulerInitial] = useState<{ contacts: Contact[]; showCreate: boolean } | null>(null);
+  const [templateContent, setTemplateContent] = useState("");
   const [waStatuses, setWaStatuses] = useState<Record<AccountId, Pick<WhatsAppState, "status" | "phone">>>({
     "account-1": { status: "disconnected", phone: null },
     "account-2": { status: "disconnected", phone: null },
@@ -151,12 +155,13 @@ export default function Home() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Navigation - The 5 Steps */}
-        <div className="grid grid-cols-5 gap-2 mb-8">
+        {/* Navigation - The 6 Steps */}
+        <div className="grid grid-cols-6 gap-2 mb-8">
           {[
             { id: "connect", label: "Connect", icon: ShieldCheck },
             { id: "generate", label: "Generate", icon: Database },
             { id: "validate", label: "Validate", icon: Zap },
+            { id: "messaging", label: "Messaging", icon: Send },
             { id: "templates", label: "Templates", icon: LayoutDashboard },
             { id: "schedule", label: "Schedule", icon: CalendarClock },
           ].map((step, idx) => {
@@ -265,17 +270,79 @@ export default function Home() {
                     row: i + 1,
                   }));
                   setSchedulerInitial({ contacts, showCreate: true });
-                  setPageTab("schedule");
+                  setPageTab("messaging");
                 }}
               />
-              <div className="flex justify-center">
-                 <Button 
+              <div className="flex justify-center gap-3">
+                <Button 
                   variant="ghost" 
                   className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]"
                   onClick={() => setPageTab("templates")}
                 >
-                  Manage Messaging Templates →
+                  ← Go to Templates
                 </Button>
+                <Button 
+                  variant="outline" 
+                  className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-8 h-10"
+                  onClick={() => setPageTab("messaging")}
+                >
+                  Continue to Messaging →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pageTab === "messaging" && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              {!messageChannel ? (
+                <MessagingHub onChannelSelect={(channel) => setMessageChannel(channel)} />
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold uppercase tracking-wider">
+                      {messageChannel === "whatsapp" ? "WhatsApp" : "SMS"} Campaign
+                    </h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMessageChannel(null)}
+                      className="text-xs"
+                    >
+                      ← Change Channel
+                    </Button>
+                  </div>
+
+                  {schedulerInitial && (
+                    <UnifiedMessenger
+                      channel={messageChannel}
+                      contacts={schedulerInitial.contacts}
+                      messageTemplate={templateContent || "Hello!"}
+                      onSendComplete={(results) => {
+                        // After sending, optionally proceed to scheduling
+                        setPageTab("schedule");
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-center gap-3">
+                <Button 
+                  variant="ghost" 
+                  className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]"
+                  onClick={() => setPageTab("templates")}
+                >
+                  ← Manage Templates
+                </Button>
+                {messageChannel && (
+                  <Button 
+                    variant="outline" 
+                    className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-8 h-10"
+                    onClick={() => setPageTab("schedule")}
+                  >
+                    Skip to Scheduling →
+                  </Button>
+                )}
               </div>
             </div>
           )}

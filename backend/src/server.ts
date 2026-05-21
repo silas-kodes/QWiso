@@ -20,6 +20,7 @@ import datasetRoutes from './routes/datasets.js';
 import whatsappRoutes from './routes/whatsapp.js';
 import exportRoutes from './routes/exports.js';
 import smsRoutes from './routes/sms.js';
+import messagingRoutes from './routes/messaging.js';
 import campaignsRoutes from './routes/campaigns.js';
 import { automationRoutes } from './routes/automation.js';
 
@@ -98,6 +99,7 @@ app.use('/api/datasets', requireSession, datasetRoutes);
 app.use('/api/whatsapp', requireSession, whatsappRoutes);
 app.use('/api/exports', requireSession, exportRoutes);
 app.use('/api/sms', requireSession, smsRoutes);
+app.use('/api/messaging', requireSession, messagingRoutes);
 app.use('/api/campaigns', requireSession, campaignsRoutes);
 app.use('/api/automation', requireSession, automationRoutes);
 

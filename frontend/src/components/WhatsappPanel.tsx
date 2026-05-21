@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ComponentType } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Smartphone,
@@ -10,7 +10,8 @@ import {
   Loader2,
   RefreshCw,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  type LucideIcon
 } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 
@@ -573,7 +574,7 @@ function BulkSendTab({ initialNumbers = '' }: BulkSendProps) {
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 
-const TABS: { id: Tab; label: string; icon: any }[] = [
+const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'status', label: 'Rotation Pool', icon: Activity },
   { id: 'single', label: 'Single WA', icon: Send },
   { id: 'bulk', label: 'Bulk WA', icon: Users },

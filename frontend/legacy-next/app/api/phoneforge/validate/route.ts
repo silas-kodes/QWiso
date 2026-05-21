@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
       const CONCURRENCY = 4;
 
       async function processOne(n: { raw: string; display: string }, index: number) {
-        // Strip non-digits, strip leading dial prefix for JID
         const digits = n.raw.replace(/\D/g, "");
         let valid = false;
         try {
@@ -43,7 +42,6 @@ export async function POST(req: NextRequest) {
         push({ type: "progress", index, total: numbers.length, current: results.length, number: n.display, valid });
       }
 
-      // Concurrent pool
       let nextIdx = 0;
       async function runWorker() {
         while (true) {

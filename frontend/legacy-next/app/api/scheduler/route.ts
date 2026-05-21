@@ -6,7 +6,6 @@ import type { AccountId } from "@/lib/whatsapp";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// Start the engine on first request
 let started = false;
 function ensureEngine() {
   if (started) return;

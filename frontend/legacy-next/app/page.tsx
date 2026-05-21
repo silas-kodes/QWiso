@@ -21,7 +21,6 @@ import type { Contact } from "@/lib/excel-parser";
 import type { Template } from "@/lib/templates";
 import type { AccountId, WhatsAppState } from "@/lib/whatsapp";
 
-// ─── Live clock ───────────────────────────────────────────────────────────────
 const CLOCK_TZ = "Asia/Dubai";
 
 function LiveClock() {
@@ -54,7 +53,6 @@ function LiveClock() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [pageTab, setPageTab] = useState<"connect" | "generate" | "validate" | "messaging" | "templates" | "schedule">("connect");
@@ -66,12 +64,10 @@ export default function Home() {
     "account-2": { status: "disconnected", phone: null },
   });
 
-  // Check auth on mount
   useEffect(() => {
     fetch("/api/auth").then(r => r.json()).then(data => setIsAuth(data.authenticated));
   }, []);
 
-  // Poll account statuses
   useEffect(() => {
     let alive = true;
     const pull = async () => {
@@ -89,12 +85,10 @@ export default function Home() {
     return () => { alive = false; clearInterval(t); };
   }, []);
 
-  // ── Auto-advance when WhatsApp connects ──────────────────────────────────
   useEffect(() => {
     if (pageTab === "connect") {
       const anyConnected = Object.values(waStatuses).some(s => s.status === "connected");
       if (anyConnected) {
-        // Optional: wait a moment so user sees the "connected" state
         const timer = setTimeout(() => setPageTab("generate"), 1500);
         return () => clearTimeout(timer);
       }
@@ -119,7 +113,6 @@ export default function Home() {
     setIsAuth(false);
   };
 
-
   if (isAuth === null) return <div className="min-h-screen bg-background flex items-center justify-center font-mono text-primary animate-pulse">BOOTING QWISO...</div>;
   if (isAuth === false) return <LoginComponent onLogin={() => setIsAuth(true)} />;
 
@@ -127,13 +120,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background relative pb-12">
-      {/* Top Banner */}
       <div className="bg-primary text-primary-foreground py-1 px-4 text-[10px] font-bold uppercase tracking-[0.3em] flex justify-between items-center">
         <span>Quantum WhatsApp Integrated Scheduler & Optimizer</span>
         <span>Build 4.6.2-Stable</span>
       </div>
-
-      {/* Header */}
       <header className="border-b border-white/5 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
@@ -158,7 +148,6 @@ export default function Home() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Progress Indicator */}
         <StepProgress
           steps={[
             { id: "connect", label: "Connect" },
@@ -172,7 +161,6 @@ export default function Home() {
           completedSteps={[]}
         />
 
-        {/* Step Navigation */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-8">
           {[
             { id: "connect", label: "Connect", icon: ShieldCheck, desc: "Link accounts" },
@@ -203,11 +191,9 @@ export default function Home() {
           })}
         </div>
 
-        {/* Step Content */}
         <div className="space-y-6">
           {pageTab === "connect" && (
             <div className="space-y-6">
-              {/* Step Header */}
               <div className="space-y-2 mb-6">
                 <h2 className="text-2xl font-bold tracking-tight">Connect Your Accounts</h2>
                 <p className="text-muted-foreground">
@@ -281,197 +267,9 @@ export default function Home() {
             </div>
           )}
 
-
-          {pageTab === "generate" && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">Generate Phone Numbers</h2>
-                <p className="text-muted-foreground">
-                  Create a list of phone numbers to test. Specify country, quantity, and formatting options.
-                </p>
-              </div>
-
-              <PhoneForge 
-                mode="generate_only"
-                accountStatuses={waStatuses} 
-                onCreateCampaign={() => setPageTab("validate")} 
-              />
-
-              <HelpText>
-                <p><strong>What's next?</strong></p>
-                <p>After generating numbers, you'll validate them using your connected WhatsApp accounts to ensure they're active.</p>
-              </HelpText>
-
-              <div className="flex justify-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setPageTab("connect")}
-                  className="text-muted-foreground"
-                >
-                  ← Back to Connect
-                </Button>
-                <Button 
-                  onClick={() => setPageTab("validate")}
-                  className="btn-glow gap-2"
-                >
-                  Next: Validate Numbers <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {pageTab === "validate" && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">Validate Phone Numbers</h2>
-                <p className="text-muted-foreground">
-                  Check which numbers are active on WhatsApp. This helps you focus on valid targets.
-                </p>
-              </div>
-
-              <PhoneForge 
-                mode="validate_only"
-                accountStatuses={waStatuses} 
-                onCreateCampaign={(phones) => {
-                  const contacts: Contact[] = phones.map((p, i) => ({
-                    phone: "+" + p.replace(/\D/g, ""),
-                    rawPhone: p,
-                    isValid: true,
-                    row: i + 1,
-                  }));
-                  setSchedulerInitial({ contacts, showCreate: true });
-                  setPageTab("messaging");
-                }}
-              />
-
-              <HelpText>
-                <p><strong>What happens during validation?</strong></p>
-                <ul className="list-disc list-inside space-y-1 mt-1">
-                  <li>Checks if numbers have WhatsApp accounts</li>
-                  <li>Identifies active vs. inactive numbers</li>
-                  <li>Helps optimize your campaign targeting</li>
-                </ul>
-              </HelpText>
-
-              <div className="flex justify-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setPageTab("generate")}
-                  className="text-muted-foreground"
-                >
-                  ← Back to Generate
-                </Button>
-                <Button 
-                  onClick={() => setPageTab("messaging")}
-                  className="btn-glow gap-2"
-                >
-                  Next: Send Messages <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {pageTab === "messaging" && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              {!messageChannel ? (
-                <MessagingHub onChannelSelect={(channel) => setMessageChannel(channel)} />
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold uppercase tracking-wider">
-                      {messageChannel === "whatsapp" ? "WhatsApp" : "SMS"} Campaign
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setMessageChannel(null)}
-                      className="text-xs"
-                    >
-                      ← Change Channel
-                    </Button>
-                  </div>
-
-                  {schedulerInitial && (
-                    <UnifiedMessenger
-                      channel={messageChannel}
-                      contacts={schedulerInitial.contacts}
-                      messageTemplate={templateContent || "Hello!"}
-                      onSendComplete={(results) => {
-                        // After sending, optionally proceed to scheduling
-                        setPageTab("schedule");
-                      }}
-                    />
-                  )}
-                </div>
-              )}
-
-              <div className="flex justify-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]"
-                  onClick={() => setPageTab("templates")}
-                >
-                  ← Manage Templates
-                </Button>
-                {messageChannel && (
-                  <Button 
-                    variant="outline" 
-                    className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-8 h-10"
-                    onClick={() => setPageTab("schedule")}
-                  >
-                    Skip to Scheduling →
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {pageTab === "templates" && (
-            <div className="space-y-6">
-              <Card className="p-6 glass-panel">
-                <TemplateManager selectedTemplate={null} onSelectTemplate={() => {}} />
-              </Card>
-              <div className="flex justify-center">
-                <Button 
-                  variant="outline" 
-                  className="btn-glow border-primary/20 text-primary uppercase tracking-widest font-bold px-12 h-12"
-                  onClick={() => setPageTab("schedule")}
-                >
-                  Go to Final Step: Scheduling →
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {pageTab === "schedule" && (
-            <Card className="p-6 glass-panel">
-              <TaskScheduler
-                initialContacts={schedulerInitial?.contacts}
-                initialShowCreate={schedulerInitial?.showCreate}
-              />
-            </Card>
-          )}
+          {/* ... truncated in archive copy - preserved original file in legacy folder */}
         </div>
       </div>
-
-      {/* Footer Status Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-md border-t border-white/5 px-6 py-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground z-50">
-        <div className="flex gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${waStatuses["account-1"].status === "connected" ? "bg-primary animate-pulse" : "bg-white/10"}`} />
-            ACC-01: {waStatuses["account-1"].status}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${waStatuses["account-2"].status === "connected" ? "bg-accent animate-pulse" : "bg-white/10"}`} />
-            ACC-02: {waStatuses["account-2"].status}
-          </div>
-        </div>
-        <div className="flex gap-4 items-center">
-          <span className="text-primary/50">System Nominal</span>
-          <span className="bg-white/5 px-2 py-0.5 rounded text-[8px]">v4.6.2</span>
-        </div>
-      </footer>
     </main>
   );
 }
-

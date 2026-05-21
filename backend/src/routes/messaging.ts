@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { sendSingleSms } from '../sms/textbee.js';
+import { sendSingleSms, sendSms } from '../sms/textbee.js';
 import { getWhatsAppManager } from '../wvalidator/client.js';
 import { pickNextAccount } from '../wvalidator/rotation.js';
 import { validateInternationalPhone } from '../qwiso/phone.js';
@@ -46,7 +46,7 @@ router.post('/send', async (req, res) => {
     } else if (channel === 'whatsapp') {
       const manager = getWhatsAppManager();
       
-      let instance;
+      let instance: any;
       if (clientId) {
         instance = manager.getInstance(clientId);
         if (!instance || !instance.isReady()) {
@@ -117,7 +117,7 @@ router.post('/send-bulk', async (req, res) => {
     } else if (channel === 'whatsapp') {
       const manager = getWhatsAppManager();
       
-      let instance;
+      let instance: any;
       if (clientId) {
         instance = manager.getInstance(clientId);
         if (!instance || !instance.isReady()) {
@@ -172,15 +172,15 @@ router.post('/send-bulk', async (req, res) => {
  */
 router.get('/status', (_req, res) => {
   const manager = getWhatsAppManager();
-  const waInstances = manager.getInstances();
-  const waReady = Object.values(waInstances).some(inst => inst.isReady?.());
+  const waStatuses = manager.getInstances();
+  const waReady = waStatuses.some(s => s.state === 'ready');
 
   res.json({
     channels: {
       whatsapp: {
         available: waReady,
-        accounts: Object.keys(waInstances).length,
-        ready: Object.values(waInstances).filter(inst => inst.isReady?.()).length,
+        accounts: waStatuses.length,
+        ready: waStatuses.filter(s => s.state === 'ready').length,
       },
       sms: {
         available: !!process.env.TEXTBEE_DEVICE_ID,

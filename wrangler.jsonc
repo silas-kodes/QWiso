@@ -1,0 +1,24 @@
+{
+  // Cloudflare Workers configuration for Qwiso frontend deployment
+  // Deploys the Vite-built static assets from frontend/dist as a static site
+  "name": "qwiso",
+  "compatibility_date": "2026-05-21",
+
+  // Serve the pre-built Vite frontend as static assets
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS"
+  },
+
+  // Environment-specific configuration
+  "env": {
+    "production": {
+      "name": "qwiso",
+      "vars": {
+        // Set this to your Railway backend service domain, e.g.:
+        // "API_URL": "https://your-service.up.railway.app"
+        "API_URL": ""
+      }
+    }
+  }
+}

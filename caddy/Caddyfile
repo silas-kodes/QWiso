@@ -1,0 +1,81 @@
+# Qwiso Caddy Configuration
+# Place this at /etc/caddy/Caddyfile or use with `caddy run --config Caddyfile`
+
+# Basic Auth credentials (generate with: caddy hash-password)
+# Replace with your hashed password
+(basic_auth) {
+	basicauth {
+		# username: admin
+		# To generate: caddy hash-password
+		admin $2a$14$...your-hashed-password...
+	}
+}
+
+# Common security headers
+(security_headers) {
+	header {
+		# Enable HSTS
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		# Disable FLoC
+		Permissions-Policy "interest-cohort=()"
+		# XSS Protection
+		X-Content-Type-Options "nosniff"
+		# Frame protection
+		X-Frame-Options "DENY"
+		# CSP (adjust as needed)
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws: wss:;"
+		# Remove Server header
+		-Server
+	}
+}
+
+# Rate limiting (requires http.rate_limit module)
+# Install: xcaddy build --with github.com/mholt/caddy-ratelimit
+(rate_limit) {
+	rate_limit {
+		zone static {
+			key static
+			events 100
+			window 1m
+		}
+	}
+}
+
+# Main site configuration
+your-domain.com {
+	# TLS with Let's Encrypt (automatic)
+	tls {
+		# Use Let's Encrypt staging for testing
+		# ca https://acme-staging-v02.api.letsencrypt.org/directory
+	}
+
+	# Import basic auth
+	import basic_auth
+	import security_headers
+
+	# Reverse proxy to Qwiso backend
+	reverse_proxy localhost:3001 {
+		# WebSocket support
+		header_up Host {host}
+		header_up X-Real-IP {remote}
+		header_up X-Forwarded-For {remote}
+		header_up X-Forwarded-Proto {scheme}
+		header_up Connection "Upgrade"
+		header_up Upgrade {>Upgrade}
+	}
+
+	# Logging
+	log {
+		output file /var/log/caddy/qwiso.access.log {
+			roll_size 10MB
+			roll_keep 5
+		}
+		format json
+	}
+}
+
+# Alternative: Local development (no TLS)
+# :80 {
+# 	import basic_auth
+# 	reverse_proxy localhost:3001
+# }

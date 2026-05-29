@@ -1,0 +1,10 @@
+name = "qwiso-worker-proxy"
+main = "index.js"
+compatibility_date = "2026-05-21"
+workers_dev = true
+
+# Replace with your Cloudflare account ID before publishing.
+account_id = "YOUR_ACCOUNT_ID"
+
+[build]
+  command = ""

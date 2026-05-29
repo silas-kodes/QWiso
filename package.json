@@ -1,0 +1,26 @@
+{
+  "name": "qwiso-unified",
+  "version": "1.0.0",
+  "description": "Qwiso Unified - Number Generation + WhatsApp Validation Web App",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "prebuild": "npm run install:all",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install --include=dev && cd backend && npm install --include=dev && cd ../frontend && npm install --include=dev",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

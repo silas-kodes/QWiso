@@ -151,6 +151,7 @@ const possibleDistPaths = [
 let frontendDist = possibleDistPaths.find(p => existsSync(p));
 
 const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
   '.js': 'application/javascript',
   '.css': 'text/css',
   '.svg': 'image/svg+xml',
@@ -196,8 +197,17 @@ if (frontendDist) {
       res.type('html').send(indexHtml);
       return;
     }
-    const ext = filePath.substring(filePath.lastIndexOf('.'));
-    res.type(MIME_TYPES[ext] || 'octet-stream').sendFile(filePath);
+    try {
+      const ext = filePath.substring(filePath.lastIndexOf('.'));
+      const mime = MIME_TYPES[ext] || 'application/octet-stream';
+      const content = readFileSync(filePath);
+      res.set('Content-Type', mime);
+      res.set('Cache-Control', 'no-store, max-age=0');
+      res.send(content);
+    } catch (err) {
+      console.error(`[Server] Error reading file ${filePath}:`, err);
+      res.status(500).type('text').send('Internal server error');
+    }
   });
 } else {
   console.warn(`[Server] Frontend dist not found (tried: ${possibleDistPaths.join(', ')}) — serving API only`);

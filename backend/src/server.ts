@@ -135,13 +135,23 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 initializeWebSocket(server);
 
 // Serve frontend static files (built by Vite)
-// In production on Railway, frontend/dist is at ../../frontend/dist relative to dist/server.js
+// Try multiple possible paths for the frontend dist directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const frontendDist = join(__dirname, '../../frontend/dist');
 
-if (existsSync(frontendDist)) {
-  // Serve Vite build assets (JS, CSS, images, etc.) with correct MIME types
+// On Railway (Nixpacks): project root = /app, server.js = /app/backend/dist/server.js
+// Local dev: server.js = <project>/backend/dist/server.js
+const possibleDistPaths = [
+  join(__dirname, '../../frontend/dist'),          // from dist/server.js
+  join(__dirname, '../../../frontend/dist'),        // from src/server.ts (tsx watch)
+  join(process.cwd(), 'frontend', 'dist'),           // from CWD
+];
+
+let frontendDist = possibleDistPaths.find(p => existsSync(p));
+
+if (frontendDist) {
+  console.log(`[Server] Serving frontend from: ${frontendDist}`);
+  // Serve Vite build assets with explicit MIME types
   app.use(express.static(frontendDist, {
     setHeaders: (res, path) => {
       if (path.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
@@ -150,22 +160,16 @@ if (existsSync(frontendDist)) {
     },
   }));
 
-  // SPA fallback — only for non-file routes (let express.static handle assets)
-  app.get('*', (req, res) => {
-    if (req.path.includes('.')) {
-      res.status(404).end();
-      return;
-    }
-    res.sendFile(join(frontendDist, 'index.html'));
+  // SPA fallback — unmatched routes serve index.html for React Router
+  app.get('*', (_req, res) => {
+    res.sendFile(join(frontendDist!, 'index.html'));
   });
-
-  console.log(`[Server] Serving frontend from: ${frontendDist}`);
 } else {
+  console.warn(`[Server] Frontend dist not found (tried: ${possibleDistPaths.join(', ')}) — serving API only`);
   // No frontend build — return JSON 404 for unknown routes
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
-  console.warn(`[Server] Frontend dist not found at ${frontendDist} — serving API only`);
 }
 
 // Start server

@@ -56,6 +56,14 @@ export function initializeWebSocket(server: Server): void {
           return;
         }
 
+        if (msg.type === 'wa_get_status') {
+          const statuses = manager.getInstances();
+          statuses.forEach(status => {
+            ws.send(JSON.stringify({ type: 'wa_status', status }));
+          });
+          return;
+        }
+
         const clientId = msg.clientId || 'main';
         const instance = manager.getInstance(clientId);
 

@@ -186,6 +186,9 @@ server.listen(PORT, async () => {
         console.log(`[Server] Found ${activeSessions.length} active sessions to restore:`, activeSessions.map(s => s.id));
         for (const config of activeSessions) {
           const inst = await manager.createInstance(config.name, config.id);
+          if (!inst.hasSession()) {
+            console.warn(`[Server] Session ${config.id} (${config.name}) has no saved credentials on disk — will need re-authentication.`);
+          }
           inst.initialize().catch(err => console.error(`[WA Manager] Failed to init ${config.id}:`, err));
         }
       } else {

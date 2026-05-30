@@ -22,6 +22,8 @@ function connectGlobal(
   ws.onopen = () => {
     console.log('[WS] Connected')
     setConnected(true)
+    // Request current instance statuses to restore UI state after reload
+    ws.send(JSON.stringify({ type: 'wa_get_status' }))
   }
 
   ws.onmessage = (event) => {
@@ -127,6 +129,8 @@ export function useWebSocket() {
   const send = useCallback((message: unknown) => {
     if (globalWs && globalWs.readyState === WebSocket.OPEN) {
       globalWs.send(JSON.stringify(message))
+    } else {
+      console.warn('[WS] Cannot send — WebSocket not open:', message)
     }
   }, [])
 

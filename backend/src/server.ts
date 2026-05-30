@@ -12,7 +12,7 @@ import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 
 // Import database (initializes connection)
 import './db/db.js';
@@ -166,27 +166,37 @@ const MIME_TYPES: Record<string, string> = {
 
 if (frontendDist) {
   console.log(`[Server] Serving frontend from: ${frontendDist}`);
+  // Log first few asset files for debugging
+  try {
+    const assetsDir = join(frontendDist, 'assets');
+    if (existsSync(assetsDir)) {
+      const files = readdirSync(assetsDir);
+      console.log(`[Server] Assets found: ${files.slice(0, 10).join(', ')}${files.length > 10 ? `... (+${files.length - 10} more)` : ''}`);
+    } else {
+      console.warn(`[Server] No assets/ directory found at ${frontendDist}`);
+      console.warn(`[Server] Dist contents: ${readdirSync(frontendDist).join(', ')}`);
+    }
+  } catch { /* ignore */ }
   const indexHtml = readFileSync(join(frontendDist, 'index.html'), 'utf-8');
 
   app.use((req, res, next) => {
-    // Skip API routes
     if (req.path.startsWith('/api/') || req.path.startsWith('/ws') || req.path === '/health') {
       next();
       return;
     }
-    const filePath = join(frontendDist!, req.path === '/' ? 'index.html' : req.path);
+    // Strip leading slash so path.join doesn't treat it as absolute
+    const relativePath = req.path === '/' ? 'index.html' : req.path.replace(/^\//, '');
+    const filePath = join(frontendDist!, relativePath);
     if (!existsSync(filePath)) {
       if (req.path.includes('.')) {
-        res.status(404).end();
+        res.status(404).type('text').send('Not found');
         return;
       }
-      res.setHeader('Content-Type', 'text/html');
-      res.send(indexHtml);
+      res.type('html').send(indexHtml);
       return;
     }
     const ext = filePath.substring(filePath.lastIndexOf('.'));
-    res.setHeader('Content-Type', MIME_TYPES[ext] || 'application/octet-stream');
-    res.sendFile(filePath);
+    res.type(MIME_TYPES[ext] || 'octet-stream').sendFile(filePath);
   });
 } else {
   console.warn(`[Server] Frontend dist not found (tried: ${possibleDistPaths.join(', ')}) — serving API only`);

@@ -41,6 +41,7 @@ export function Layout({ children }: LayoutProps) {
     disconnected: 'bg-pf-text-dim',
     connecting: 'bg-pf-warning',
     qr_ready: 'bg-pf-warning',
+    pairing: 'bg-pf-warning',
     authenticated: 'bg-pf-info',
     ready: 'bg-pf-success',
     error: 'bg-pf-error',

@@ -6,8 +6,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { sendSingleSms, sendSms } from '../sms/textbee.js';
-import { getWhatsAppManager } from '../wvalidator/client.js';
-import { pickNextAccount } from '../wvalidator/rotation.js';
+import { getWhatsAppManager } from '../baileys/client.js';
 import { validateInternationalPhone } from '../qwiso/phone.js';
 
 const router = Router();
@@ -54,17 +53,11 @@ router.post('/send', async (req, res) => {
           return;
         }
       } else {
-        const waAccount = pickNextAccount();
-        if (!waAccount) {
-          res.status(503).json({ error: 'No healthy WhatsApp accounts available.' });
+        instance = manager.getInstance('main');
+        if (!instance || !instance.isReady()) {
+          res.status(503).json({ error: 'WhatsApp account is not ready.' });
           return;
         }
-        instance = manager.getInstance(waAccount.id);
-      }
-
-      if (!instance || !instance.isReady()) {
-        res.status(503).json({ error: 'Selected WhatsApp account is not ready.' });
-        return;
       }
 
       const success = await instance.sendMessage(phone.normalized.digits, message);
@@ -125,12 +118,11 @@ router.post('/send-bulk', async (req, res) => {
           return;
         }
       } else {
-        const waAccount = pickNextAccount();
-        if (!waAccount) {
-          res.status(503).json({ error: 'No healthy WhatsApp accounts available.' });
+        instance = manager.getInstance('main');
+        if (!instance || !instance.isReady()) {
+          res.status(503).json({ error: 'WhatsApp account is not ready.' });
           return;
         }
-        instance = manager.getInstance(waAccount.id);
       }
 
       const results = [];
@@ -173,14 +165,14 @@ router.post('/send-bulk', async (req, res) => {
 router.get('/status', (_req, res) => {
   const manager = getWhatsAppManager();
   const waStatuses = manager.getInstances();
-  const waReady = waStatuses.some(s => s.state === 'ready');
+  const waReady = waStatuses.some((s: any) => s.state === 'ready');
 
   res.json({
     channels: {
       whatsapp: {
         available: waReady,
         accounts: waStatuses.length,
-        ready: waStatuses.filter(s => s.state === 'ready').length,
+        ready: waStatuses.filter((s: any) => s.state === 'ready').length,
       },
       sms: {
         available: !!process.env.TEXTBEE_DEVICE_ID,

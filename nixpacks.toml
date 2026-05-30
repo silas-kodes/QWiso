@@ -1,35 +1,10 @@
 # Nixpacks configuration for Railway deployment
 # Builds frontend + backend, serves both from the Express server
+# Using Baileys (no Chrome required)
 
 [phases.setup]
 nixPkgs = [
   "nodejs_20",
-  "glib",
-  "nss",
-  "nspr",
-  "atk",
-  "cups",
-  "dbus",
-  "expat",
-  "libdrm",
-  "libxcb",
-  "libxkbcommon",
-  "xorg.libX11",
-  "xorg.libXcomposite",
-  "xorg.libXdamage",
-  "xorg.libXext",
-  "xorg.libXfixes",
-  "xorg.libXrandr",
-  "mesa",
-  "pango",
-  "cairo",
-  "alsa-lib",
-  "chromium",
-  "gtk3",
-  "gdk-pixbuf",
-  "libnotify",
-  "libappindicator",
-  "libindicator",
 ]
 
 [phases.install]
@@ -45,12 +20,4 @@ cmds = [
 ]
 
 [start]
-# Resolve the Nix-installed Chromium path at runtime and export it before starting the server.
-# `which chromium` finds the binary in $PATH (set by Nix profile) so the path is always correct
-# regardless of the exact Nix store hash. PUPPETEER_SKIP_CHROMIUM_DOWNLOAD prevents Puppeteer
-# from trying to download its own Chromium during npm install.
-# Also set LD_LIBRARY_PATH to ensure Nix libraries are found at runtime.
-cmd = "export PUPPETEER_EXECUTABLE_PATH=$(which chromium) && export LD_LIBRARY_PATH=/nix/var/nix/profiles/default/lib:$LD_LIBRARY_PATH && cd backend && npm start"
-
-[variables]
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+cmd = "cd backend && npm start"

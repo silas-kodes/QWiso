@@ -15,10 +15,9 @@ import {
   getValidCountForDataset,
   type NumberRecord,
 } from '../db/queries.js';
-import { campaignReceiptEvents, getWhatsAppManager, type MessageReceiptEvent } from '../wvalidator/client.js';
+import { campaignReceiptEvents, getWhatsAppManager, type MessageReceiptEvent } from '../baileys/client.js';
 import { sendSingleSms } from '../sms/textbee.js';
 import { broadcastToClients } from '../websocket.js';
-import { pickNextAccount } from '../wvalidator/rotation.js';
 
 const BATCH_SIZE = 50;
 const MIN_MESSAGE_DELAY_MS = 7_000;
@@ -120,7 +119,7 @@ function registerReceiptListener(): void {
 }
 
 function hasReadyWhatsAppSession(): boolean {
-  return getWhatsAppManager().getInstances().some(instance => instance.state === 'ready');
+  return getWhatsAppManager().getInstances().some((instance: any) => instance.state === 'ready');
 }
 
 async function interruptibleDelay(
@@ -168,14 +167,9 @@ async function dispatchWhatsAppMessage(
   message: string,
   image?: { data: string; mimeType: string; filename?: string },
 ): Promise<void> {
-  const waAccount = pickNextAccount();
-  if (!waAccount) {
-    throw new CampaignPausedError('No ready WhatsApp session is available for campaign dispatch.', 0);
-  }
-
-  const instance = getWhatsAppManager().getInstance(waAccount.id);
+  const instance = getWhatsAppManager().getInstance('main');
   if (!instance || !instance.isReady()) {
-    throw new CampaignPausedError(`WhatsApp session ${waAccount.id} is not ready.`, 0);
+    throw new CampaignPausedError('WhatsApp session is not ready.', 0);
   }
 
   const dispatch = instance.dispatchMessage(digits, message, image);
@@ -186,7 +180,7 @@ async function dispatchWhatsAppMessage(
     .then(({ messageId }) => {
       pendingDispatches.set(messageId, { campaignId, numberId, digits });
     })
-    .catch(err => {
+    .catch((err: any) => {
       console.error(`[Campaign] Async WhatsApp dispatch failed for ${digits}:`, err);
       updateNumberContactStatus(numberId, 'failed');
       incrementCampaignFailed(campaignId);

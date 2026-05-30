@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type WAState = 'disconnected' | 'connecting' | 'qr_ready' | 'authenticated' | 'ready' | 'error'
+export type WAState = 'disconnected' | 'connecting' | 'qr_ready' | 'pairing' | 'authenticated' | 'ready' | 'error'
 
 export interface WAStatus {
   id: string
@@ -8,6 +8,7 @@ export interface WAStatus {
   state: WAState
   phone: string | null
   qrCode: string | null
+  pairingCode: string | null
   error: string | null
 }
 

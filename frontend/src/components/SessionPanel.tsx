@@ -10,10 +10,21 @@ export function SessionPanel() {
   const [isLoading, setIsLoading] = useState<string | null>(null)
   const [newAccountName, setNewAccountName] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [authMethod, setAuthMethod] = useState<'qr' | 'pairing'>('qr')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneError, setPhoneError] = useState('')
 
   const handleConnect = (clientId: string) => {
+    if (authMethod === 'pairing') {
+      const digits = phoneNumber.replace(/\D/g, '')
+      if (digits.length < 7 || digits.length > 15) {
+        setPhoneError('Enter a valid number with country code, e.g. +971501234567')
+        return
+      }
+      setPhoneError('')
+    }
     setIsLoading(clientId)
-    send({ type: 'wa_initialize', clientId })
+    send({ type: 'wa_initialize', clientId, method: authMethod, phone: authMethod === 'pairing' ? phoneNumber : undefined })
     setTimeout(() => setIsLoading(null), 2000)
   }
 
@@ -31,9 +42,18 @@ export function SessionPanel() {
 
   const handleAddAccount = () => {
     if (!newAccountName.trim()) return
+    if (authMethod === 'pairing') {
+      const digits = phoneNumber.replace(/\D/g, '')
+      if (digits.length < 7 || digits.length > 15) {
+        setPhoneError('Enter a valid number with country code, e.g. +971501234567')
+        return
+      }
+      setPhoneError('')
+    }
     const newId = `wa_${Date.now()}`
-    send({ type: 'wa_initialize', clientId: newId, name: newAccountName })
+    send({ type: 'wa_initialize', clientId: newId, name: newAccountName, method: authMethod, phone: authMethod === 'pairing' ? phoneNumber : undefined })
     setNewAccountName('')
+    setPhoneNumber('')
     setIsAdding(false)
   }
 
@@ -42,7 +62,8 @@ export function SessionPanel() {
       case 'ready': return 'text-pf-success'
       case 'error': return 'text-pf-error'
       case 'connecting':
-      case 'qr_ready': return 'text-pf-warning'
+      case 'qr_ready':
+      case 'pairing': return 'text-pf-warning'
       default: return 'text-pf-text-muted'
     }
   }
@@ -53,6 +74,7 @@ export function SessionPanel() {
       case 'error': return <XCircle className="w-5 h-5 text-pf-error" />
       case 'connecting': return <RefreshCw className="w-5 h-5 text-pf-warning animate-spin" />
       case 'qr_ready': return <QrCode className="w-5 h-5 text-pf-warning" />
+      case 'pairing': return <Smartphone className="w-5 h-5 text-pf-warning" />
       default: return <Smartphone className="w-5 h-5 text-pf-text-muted" />
     }
   }
@@ -63,6 +85,7 @@ export function SessionPanel() {
       case 'error': return status.error || 'Error occurred'
       case 'connecting': return 'Connecting...'
       case 'qr_ready': return 'Scan QR code'
+      case 'pairing': return 'Enter pairing code'
       case 'authenticated': return 'Authenticating...'
       default: return 'Disconnected'
     }
@@ -129,6 +152,47 @@ export function SessionPanel() {
                   Create
                 </button>
               </div>
+
+              {/* Auth Method Selection */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setAuthMethod('qr'); setPhoneError('') }}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                    authMethod === 'qr'
+                      ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
+                      : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                  }`}
+                >
+                  <QrCode className="w-4 h-4" />
+                  QR Code
+                </button>
+                <button
+                  onClick={() => { setAuthMethod('pairing'); setPhoneError('') }}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                    authMethod === 'pairing'
+                      ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
+                      : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                  }`}
+                >
+                  <Smartphone className="w-4 h-4" />
+                  Phone Number
+                </button>
+              </div>
+
+              {/* Phone Input for Pairing */}
+              {authMethod === 'pairing' && (
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-pf-text-muted uppercase tracking-wider">Phone Number</label>
+                  <input
+                    type="tel"
+                    placeholder="+971 50 123 4567"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full bg-pf-bg border border-pf-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-1 focus:ring-pf-accent/30 transition-all shadow-inner"
+                  />
+                  {phoneError && <p className="text-xs text-pf-error font-medium">{phoneError}</p>}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -197,7 +261,7 @@ export function SessionPanel() {
               </div>
 
               {status.qrCode && status.state === 'qr_ready' && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col items-center gap-4 mb-5 bg-white p-5 rounded-2xl shadow-xl"
@@ -210,9 +274,28 @@ export function SessionPanel() {
                 </motion.div>
               )}
 
+              {status.pairingCode && status.state === 'pairing' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center gap-4 mb-5 bg-pf-surface/60 p-5 rounded-2xl border border-pf-accent/30"
+                >
+                  <div className="p-3 rounded-full bg-pf-accent/20">
+                    <Smartphone className="w-8 h-8 text-pf-accent" />
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-[10px] font-bold text-pf-text-muted uppercase tracking-widest">Enter This Code</p>
+                    <p className="text-[9px] text-pf-text-dim font-medium">WhatsApp → Linked Devices → Link with phone number</p>
+                  </div>
+                  <div className="px-8 py-4 bg-pf-bg rounded-xl border border-pf-border/30">
+                    <span className="font-mono text-3xl font-black tracking-[0.2em] text-pf-accent">{status.pairingCode}</span>
+                  </div>
+                </motion.div>
+              )}
+
               <button
                 onClick={() => status.state === 'ready' ? handleDisconnect(status.id) : handleConnect(status.id)}
-                disabled={status.state === 'connecting' || status.state === 'qr_ready' || !connected || isLoading === status.id}
+                disabled={status.state === 'connecting' || status.state === 'qr_ready' || status.state === 'pairing' || !connected || isLoading === status.id}
                 className={`w-full py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm ${
                   status.state === 'ready'
                     ? 'bg-pf-error/10 text-pf-error hover:bg-pf-error/20 border border-pf-error/30'

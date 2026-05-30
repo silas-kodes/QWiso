@@ -18,7 +18,8 @@ import {
   Download,
   ArrowRight,
   Sparkles,
-  Database
+  Database,
+  QrCode
 } from 'lucide-react'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useWebSocketStore } from '../stores/websocket'
@@ -92,6 +93,9 @@ export function PipelineWizard() {
   const [isAddingAcc, setIsAddingAcc] = useState(false)
   const [newAccName, setNewAccName] = useState('')
   const [linkingLoading, setLinkingLoading] = useState<string | null>(null)
+  const [authMethod, setAuthMethod] = useState<'qr' | 'pairing'>('qr')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneError, setPhoneError] = useState('')
 
   // Step 2: Generator States
   const [countries, setCountries] = useState<Country[]>([])
@@ -208,15 +212,32 @@ export function PipelineWizard() {
 
   const handleAddAccount = () => {
     if (!newAccName.trim()) return
+    if (authMethod === 'pairing') {
+      const digits = phoneNumber.replace(/\D/g, '')
+      if (digits.length < 7 || digits.length > 15) {
+        setPhoneError('Enter a valid number with country code, e.g. +971501234567')
+        return
+      }
+      setPhoneError('')
+    }
     const newId = `wa_${Date.now()}`
-    send({ type: 'wa_initialize', clientId: newId, name: newAccName })
+    send({ type: 'wa_initialize', clientId: newId, name: newAccName, method: authMethod, phone: authMethod === 'pairing' ? phoneNumber : undefined })
     setNewAccName('')
+    setPhoneNumber('')
     setIsAddingAcc(false)
   }
 
   const handleConnectAccount = (clientId: string) => {
+    if (authMethod === 'pairing') {
+      const digits = phoneNumber.replace(/\D/g, '')
+      if (digits.length < 7 || digits.length > 15) {
+        setPhoneError('Enter a valid number with country code, e.g. +971501234567')
+        return
+      }
+      setPhoneError('')
+    }
     setLinkingLoading(clientId)
-    send({ type: 'wa_initialize', clientId })
+    send({ type: 'wa_initialize', clientId, method: authMethod, phone: authMethod === 'pairing' ? phoneNumber : undefined })
     setTimeout(() => setLinkingLoading(null), 2000)
   }
 
@@ -558,6 +579,45 @@ export function PipelineWizard() {
                           Create
                         </button>
                       </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setAuthMethod('qr'); setPhoneError('') }}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                            authMethod === 'qr'
+                              ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
+                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                          }`}
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                          QR Code
+                        </button>
+                        <button
+                          onClick={() => { setAuthMethod('pairing'); setPhoneError('') }}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                            authMethod === 'pairing'
+                              ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
+                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                          }`}
+                        >
+                          <Smartphone className="w-3.5 h-3.5" />
+                          Phone Number
+                        </button>
+                      </div>
+
+                      {authMethod === 'pairing' && (
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold text-pf-text-muted uppercase">Phone Number</label>
+                          <input
+                            type="tel"
+                            placeholder="+971 50 123 4567"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="w-full bg-pf-bg border border-pf-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pf-accent"
+                          />
+                          {phoneError && <p className="text-[10px] text-pf-error font-medium">{phoneError}</p>}
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -594,9 +654,24 @@ export function PipelineWizard() {
                           </div>
                         )}
 
+                        {status.pairingCode && status.state === 'pairing' && (
+                          <div className="bg-pf-surface/60 p-3 rounded-lg flex flex-col items-center gap-2 border border-pf-accent/30">
+                            <div className="p-2 rounded-full bg-pf-accent/20">
+                              <Smartphone className="w-5 h-5 text-pf-accent" />
+                            </div>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-[9px] font-bold text-pf-text-muted uppercase tracking-widest">Enter This Code</span>
+                              <span className="text-[8px] text-pf-text-dim font-medium">WhatsApp → Linked Devices → Link with phone number</span>
+                            </div>
+                            <div className="px-5 py-2.5 bg-pf-bg rounded-lg border border-pf-border/30">
+                              <span className="font-mono text-xl font-black tracking-[0.15em] text-pf-accent">{status.pairingCode}</span>
+                            </div>
+                          </div>
+                        )}
+
                         <button
                           onClick={() => status.state === 'ready' ? handleDisconnectAccount(status.id) : handleConnectAccount(status.id)}
-                          disabled={status.state === 'connecting' || status.state === 'qr_ready' || linkingLoading === status.id}
+                          disabled={status.state === 'connecting' || status.state === 'qr_ready' || status.state === 'pairing' || linkingLoading === status.id}
                           className={`w-full py-2 rounded-lg font-bold text-xs ${
                             status.state === 'ready'
                               ? 'bg-pf-error/15 text-pf-error hover:bg-pf-error/20 border border-pf-error/30'

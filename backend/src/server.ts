@@ -34,7 +34,7 @@ import { optionalSession, requireSession } from './auth/session.js';
 import { initializeWebSocket } from './websocket.js';
 
 // Import WhatsApp client
-import { getWhatsAppManager } from './wvalidator/client.js';
+import { getWhatsAppManager } from './baileys/client.js';
 import { getAllWASessions, getRunningJobs, updateJobStatus } from './db/queries.js';
 
 const app = express();

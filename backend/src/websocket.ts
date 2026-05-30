@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
-import { getWhatsAppManager } from './wvalidator/client.js';
+import { getWhatsAppManager } from './baileys/client.js';
 
 let wss: WebSocketServer | null = null;
 const clients = new Set<WebSocket>();
@@ -60,14 +60,14 @@ export function initializeWebSocket(server: Server): void {
         const instance = manager.getInstance(clientId);
 
         if (msg.type === 'wa_initialize') {
-          console.log(`[WS] Initialize WhatsApp requested for ${clientId} (name: ${msg.name})`);
+          console.log(`[WS] Initialize WhatsApp requested for ${clientId} (name: ${msg.name}, method: ${msg.method || 'qr'})`);
           let inst = instance;
           if (!inst) {
             console.log(`[WS] Creating new instance for ${clientId}`);
             inst = await manager.createInstance(msg.name || `Account ${clientId}`, clientId);
           }
           try {
-            await inst.initialize();
+            await inst.initialize({ phone: msg.phone, method: msg.method || 'qr' });
           } catch (err) {
             console.error(`[WS] Failed to initialize ${clientId}:`, err);
           }

@@ -227,14 +227,17 @@ export function Campaigns() {
 
   // Start Campaign
   const handleStart = async (id: string) => {
+    console.log('[Campaigns] Start clicked:', id)
     try {
-      await apiFetch(`/api/campaigns/${id}/start`, {
+      const res = await apiFetch<{ success?: boolean; message?: string; error?: string }>(`/api/campaigns/${id}/start`, {
         method: 'POST',
       })
+      console.log('[Campaigns] Start success:', res)
       setCampaigns(campaigns.map(c => c.id === id ? { ...c, status: 'running' } : c))
+      setError(null)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to start campaign'
-      console.error('Failed to start campaign:', msg)
+      console.error('[Campaigns] Start failed:', msg)
       setError(msg)
     }
   }

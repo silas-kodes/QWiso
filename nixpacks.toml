@@ -5,6 +5,10 @@
 [phases.setup]
 nixPkgs = [
   "nodejs_20",
+  "python3",
+  "gcc",
+  "gnumake",
+  "pkg-config",
 ]
 
 [variables]

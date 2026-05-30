@@ -26,6 +26,7 @@ import smsRoutes from './routes/sms.js';
 import messagingRoutes from './routes/messaging.js';
 import campaignsRoutes from './routes/campaigns.js';
 import { automationRoutes } from './routes/automation.js';
+import { isTextBeeConfigured } from './sms/textbee.js';
 
 // Import middleware
 import { optionalSession, requireSession } from './auth/session.js';
@@ -118,6 +119,17 @@ app.use('/api/datasets', datasetRoutes);
 // WhatsApp routes don't require session for QR code display (chicken-and-egg problem)
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/exports', requireSession, exportRoutes);
+// SMS status is public (read-only gateway health check)
+app.get('/api/sms/status', (_req, res) => {
+  const configured = isTextBeeConfigured();
+  res.json({
+    configured,
+    deviceId: configured ? process.env.TEXTBEE_DEVICE_ID : null,
+    message: configured
+      ? 'TextBee SMS gateway is ready.'
+      : 'TextBee not configured. Add TEXTBEE_API_KEY and TEXTBEE_DEVICE_ID to .env.',
+  });
+});
 app.use('/api/sms', requireSession, smsRoutes);
 app.use('/api/messaging', requireSession, messagingRoutes);
 app.use('/api/campaigns', requireSession, campaignsRoutes);

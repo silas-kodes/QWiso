@@ -141,10 +141,11 @@ const __dirname = dirname(__filename);
 
 // On Railway: project root = /app, backend/dist/server.js = /app/backend/dist/server.js
 const possibleDistPaths = [
-  join(__dirname, '../../frontend/dist'),
-  join(__dirname, '../../../frontend/dist'),
-  join(process.cwd(), '..', 'frontend', 'dist'),
-  '/app/frontend/dist',
+  join(__dirname, 'public'),                         // copied by nixpacks build: backend/dist/public/
+  join(__dirname, '../../frontend/dist'),             // from dist/server.js: /app/backend/dist/ -> /app/frontend/dist/
+  join(__dirname, '../../../frontend/dist'),           // from src/server.ts (tsx watch)
+  join(process.cwd(), '..', 'frontend', 'dist'),       // from CWD (backend/): /app/backend/ -> /app/frontend/dist/
+  '/app/frontend/dist',                                 // Railway default absolute path
 ];
 
 let frontendDist = possibleDistPaths.find(p => existsSync(p));

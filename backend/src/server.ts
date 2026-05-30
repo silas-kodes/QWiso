@@ -141,11 +141,21 @@ const __dirname = dirname(__filename);
 const frontendDist = join(__dirname, '../../frontend/dist');
 
 if (existsSync(frontendDist)) {
-  // Serve Vite build assets (JS, CSS, images, etc.)
-  app.use(express.static(frontendDist));
+  // Serve Vite build assets (JS, CSS, images, etc.) with correct MIME types
+  app.use(express.static(frontendDist, {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
+      else if (path.endsWith('.css')) res.setHeader('Content-Type', 'text/css');
+      else if (path.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
+    },
+  }));
 
-  // SPA fallback — any non-API route serves index.html so React Router handles it
-  app.get('*', (_req, res) => {
+  // SPA fallback — only for non-file routes (let express.static handle assets)
+  app.get('*', (req, res) => {
+    if (req.path.includes('.')) {
+      res.status(404).end();
+      return;
+    }
     res.sendFile(join(frontendDist, 'index.html'));
   });
 

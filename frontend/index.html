@@ -14,13 +14,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      const isDev = ['localhost', '127.0.0.1', '::1'].includes(location.hostname) || !!location.port;
-      const distPath = '/dist/';
-      if (!isDev && !location.pathname.startsWith(distPath)) {
-        location.replace(distPath);
-      }
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

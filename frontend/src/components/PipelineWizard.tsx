@@ -563,64 +563,79 @@ export function PipelineWizard() {
                       className="p-4 bg-pf-surface-light border border-pf-border rounded-xl space-y-3 overflow-hidden"
                     >
                       <label className="block text-xs font-bold text-pf-text-muted uppercase">Account Identifier</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="e.g. Sales Account Alpha"
-                          value={newAccName}
-                          onChange={(e) => setNewAccName(e.target.value)}
-                          className="flex-1 bg-pf-bg border border-pf-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pf-accent"
-                        />
-                        <button
-                          onClick={handleAddAccount}
-                          disabled={!newAccName.trim()}
-                          className="btn-accent px-4 py-2 text-sm font-bold disabled:opacity-50"
-                        >
-                          Create
-                        </button>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => { setAuthMethod('qr'); setPhoneError('') }}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                            authMethod === 'qr'
-                              ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
-                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
-                          }`}
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                          QR Code
-                        </button>
-                        <button
-                          onClick={() => { setAuthMethod('pairing'); setPhoneError('') }}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                            authMethod === 'pairing'
-                              ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
-                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
-                          }`}
-                        >
-                          <Smartphone className="w-3.5 h-3.5" />
-                          Phone Number
-                        </button>
-                      </div>
-
-                      {authMethod === 'pairing' && (
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-pf-text-muted uppercase">Phone Number</label>
-                          <input
-                            type="tel"
-                            placeholder="+971 50 123 4567"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            className="w-full bg-pf-bg border border-pf-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pf-accent"
-                          />
-                          {phoneError && <p className="text-[10px] text-pf-error font-medium">{phoneError}</p>}
-                        </div>
-                      )}
+                      <input
+                        type="text"
+                        placeholder="e.g. Sales Account Alpha"
+                        value={newAccName}
+                        onChange={(e) => setNewAccName(e.target.value)}
+                        className="w-full bg-pf-bg border border-pf-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pf-accent"
+                      />
+                      <button
+                        onClick={handleAddAccount}
+                        disabled={
+                          !newAccName.trim() ||
+                          (authMethod === 'pairing' && phoneNumber.replace(/\D/g, '').length < 7)
+                        }
+                        className="w-full btn-accent py-3 text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Create {authMethod === 'pairing' ? '& Connect' : 'Account'}
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Global auth method controls — always visible when there are accounts */}
+                {Object.values(waStatuses).length > 0 && (
+                  <div className="p-3 bg-pf-surface/30 border border-pf-border/40 rounded-xl space-y-3">
+                    <p className="text-[10px] font-bold text-pf-text-muted uppercase tracking-wider">Link Method</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setAuthMethod('qr'); setPhoneError('') }}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                          authMethod === 'qr'
+                            ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
+                            : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                        }`}
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        QR Code
+                      </button>
+                      <button
+                        onClick={() => { setAuthMethod('pairing'); setPhoneError('') }}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                          authMethod === 'pairing'
+                            ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
+                            : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                        }`}
+                      >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        Phone Number
+                      </button>
+                    </div>
+
+                    {authMethod === 'pairing' && (
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold text-pf-text-muted uppercase">Phone Number</label>
+                        <input
+                          type="tel"
+                          placeholder="+971 50 123 4567"
+                          value={phoneNumber}
+                          onChange={(e) => { setPhoneNumber(e.target.value); setPhoneError('') }}
+                          className={`w-full bg-pf-bg border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 transition-all ${
+                            phoneError
+                              ? 'border-pf-error focus:border-pf-error focus:ring-pf-error/30'
+                              : 'border-pf-border focus:border-pf-accent focus:ring-pf-accent/30'
+                          }`}
+                        />
+                        {phoneError && <p className="text-[10px] text-pf-error font-medium">{phoneError}</p>}
+                        {phoneNumber.replace(/\D/g, '').length > 0 && phoneNumber.replace(/\D/g, '').length < 7 && (
+                          <p className="text-[10px] text-pf-warning font-medium">Number too short — include country code</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Accounts List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

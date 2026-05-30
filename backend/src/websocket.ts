@@ -7,7 +7,12 @@ const clients = new Set<WebSocket>();
 
 // Initialize WebSocket server
 export function initializeWebSocket(server: Server): void {
-  wss = new WebSocketServer({ server, path: '/ws' });
+  wss = new WebSocketServer({ 
+    server, 
+    path: '/ws',
+    // Allow connections from any origin (needed for Railway cross-origin setup)
+    verifyClient: () => true,
+  });
 
   wss.on('connection', async (ws) => {
     console.log('[WS] Client connected');

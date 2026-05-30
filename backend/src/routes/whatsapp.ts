@@ -15,6 +15,22 @@ router.get('/sessions', (_req, res) => {
   res.json(manager.getInstances());
 });
 
+// Rotation health statistics for each account
+router.get('/rotation-stats', (_req, res) => {
+  const instances = getWhatsAppManager().getInstances();
+  const stats = instances.map(inst => ({
+    id: inst.id,
+    name: inst.name || inst.id,
+    checksThisHour: 0,
+    checksThisSession: 0,
+    consecutiveErrors: 0,
+    cooldownUntil: 0,
+    cooldownCount: 0,
+    health: inst.state === 'ready' ? 'healthy' as const : 'degraded' as const,
+  }));
+  res.json(stats);
+});
+
 
 const imageSchema = z.object({
   data: z.string().min(1, 'Image base64 data is required'),

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useWebSocketStore } from '../stores/websocket'
 import { apiFetch, apiUrl } from '../utils/api'
+import { useAuthStore } from '../stores/auth'
 
 interface Dataset {
   id: string
@@ -132,6 +133,10 @@ export function Campaigns() {
   const wsCampaignStatuses = useWebSocketStore((state) => state.campaignStatuses)
 
   const fetchData = async () => {
+    if (!useAuthStore.getState().isAuthenticated) {
+      setLoading(false)
+      return
+    }
     try {
       const [campData, datasetData] = await Promise.all([
         apiFetch<Campaign[]>('/api/campaigns'),

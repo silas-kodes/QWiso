@@ -68,6 +68,7 @@ class WhatsAppInstance {
   private pendingPhone: string | null = null;
   private pendingMethod: 'qr' | 'pairing' = 'qr';
   private pairingCodeRequested = false;
+  private destroyed = false;
 
   constructor(id: string, name: string, manager: WhatsAppManager, baseAuthPath: string) {
     this.id = id;
@@ -110,7 +111,7 @@ class WhatsAppInstance {
   }
 
   async initialize(opts?: { phone?: string; method?: 'qr' | 'pairing' }): Promise<void> {
-    if (this.isInitializing || this.status.state === 'ready') return;
+    if (this.destroyed || this.isInitializing || this.status.state === 'ready') return;
     
     this.isInitializing = true;
     if (opts?.phone) this.pendingPhone = opts.phone;
@@ -229,6 +230,7 @@ class WhatsAppInstance {
 
       // Connection closed
       if (connection === 'close') {
+        if (this.destroyed) return;
         const code = (lastDisconnect?.error as { output?: { statusCode?: number } })?.output?.statusCode;
 
         if (code === DisconnectReason.loggedOut) {
@@ -367,6 +369,7 @@ class WhatsAppInstance {
   }
 
   async destroy(): Promise<void> {
+    this.destroyed = true;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

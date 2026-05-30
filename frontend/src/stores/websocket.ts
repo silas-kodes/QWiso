@@ -89,7 +89,9 @@ export const useWebSocketStore = create<WebSocketState>()((set) => ({
   removeWAStatus: (id) => set((state) => {
     const next = { ...state.waStatuses }
     delete next[id]
-    return { waStatuses: next }
+    const healthNext = { ...state.rotationHealths }
+    delete healthNext[id]
+    return { waStatuses: next, rotationHealths: healthNext }
   }),
 
   setAccountHealth: (health) => set((state) => ({

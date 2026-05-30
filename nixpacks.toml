@@ -25,6 +25,11 @@ nixPkgs = [
   "cairo",
   "alsa-lib",
   "chromium",
+  "gtk3",
+  "gdk-pixbuf",
+  "libnotify",
+  "libappindicator",
+  "libindicator",
 ]
 
 [phases.install]

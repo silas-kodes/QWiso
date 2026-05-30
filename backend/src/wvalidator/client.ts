@@ -107,6 +107,9 @@ class WhatsAppInstance {
     const headless = process.env.WA_HEADLESS !== 'false';
     const devtools = process.env.WA_DEVTOOLS === 'true';
 
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    console.log(`[WA:${this.id}] Using Chrome executable: ${executablePath || 'default'}`);
+
     this.client = new Client({
       authStrategy: new LocalAuth({
         clientId: this.id, // Use ID to separate session data
@@ -115,7 +118,7 @@ class WhatsAppInstance {
       puppeteer: {
         headless,
         devtools,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        executablePath: executablePath || undefined,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',

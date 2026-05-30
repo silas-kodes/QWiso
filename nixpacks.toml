@@ -44,7 +44,8 @@ cmds = [
 # `which chromium` finds the binary in $PATH (set by Nix profile) so the path is always correct
 # regardless of the exact Nix store hash. PUPPETEER_SKIP_CHROMIUM_DOWNLOAD prevents Puppeteer
 # from trying to download its own Chromium during npm install.
-cmd = "export PUPPETEER_EXECUTABLE_PATH=$(which chromium) && cd backend && npm start"
+# Also set LD_LIBRARY_PATH to ensure Nix libraries are found at runtime.
+cmd = "export PUPPETEER_EXECUTABLE_PATH=$(which chromium) && export LD_LIBRARY_PATH=/nix/var/nix/profiles/default/lib:$LD_LIBRARY_PATH && cd backend && npm start"
 
 [variables]
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"

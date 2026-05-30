@@ -224,6 +224,8 @@ export function PipelineWizard() {
     send({ type: 'wa_initialize', clientId: newId, name: newAccName, method: authMethod, phone: authMethod === 'pairing' ? phoneNumber : undefined })
     setNewAccName('')
     setPhoneNumber('')
+    setAuthMethod('qr')
+    setPhoneError('')
     setIsAddingAcc(false)
   }
 

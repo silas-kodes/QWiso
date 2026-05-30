@@ -54,6 +54,8 @@ export function SessionPanel() {
     send({ type: 'wa_initialize', clientId: newId, name: newAccountName, method: authMethod, phone: authMethod === 'pairing' ? phoneNumber : undefined })
     setNewAccountName('')
     setPhoneNumber('')
+    setAuthMethod('qr')
+    setPhoneError('')
     setIsAdding(false)
   }
 

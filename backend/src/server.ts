@@ -113,7 +113,8 @@ app.get('/health', (_req, res) => {
 
 // API routes
 app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/datasets', requireSession, datasetRoutes);
+// Dataset routes don't require session (public access for number generation)
+app.use('/api/datasets', datasetRoutes);
 // WhatsApp routes don't require session for QR code display (chicken-and-egg problem)
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/exports', requireSession, exportRoutes);

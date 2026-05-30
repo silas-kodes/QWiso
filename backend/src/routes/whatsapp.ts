@@ -6,6 +6,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { getWhatsAppManager } from '../baileys/client.js';
 import { validateInternationalPhone } from '../qwiso/phone.js';
+import { getDataset, getNumbersForValidation, updateNumberStatus } from '../db/queries.js';
+import { broadcastToClients } from '../websocket.js';
 
 const router = Router();
 
@@ -295,7 +297,87 @@ router.post('/logout', async (req, res) => {
     });
   }
 });
+// Validate phone numbers in a dataset against WhatsApp
+router.post('/validate', async (req: Request, res: Response) => {
+  const { datasetId, waClientId, concurrency = 5, totalCount } = req.body;
 
+  if (!datasetId || !waClientId) {
+    res.status(400).json({ error: 'datasetId and waClientId are required' });
+    return;
+  }
 
+  const dataset = getDataset(datasetId);
+  if (!dataset) {
+    res.status(404).json({ error: 'Dataset not found' });
+    return;
+  }
+
+  const instance = getWhatsAppManager().getInstance(waClientId);
+  if (!instance || !instance.isReady()) {
+    res.status(503).json({ error: 'WhatsApp account is not ready or not found.' });
+    return;
+  }
+
+  res.json({ success: true, message: 'Validation started' });
+
+  // Run validation asynchronously
+  const excludeIds: string[] = [];
+  let total = totalCount || 0;
+  let checked = 0;
+  let valid = 0;
+
+  const processBatch = async () => {
+    const batch = getNumbersForValidation(datasetId, concurrency * 2, excludeIds);
+    if (batch.length === 0) return;
+
+    if (total === 0) total = batch.length;
+
+    const promises = batch.map(async (num) => {
+      updateNumberStatus(num.id, 'checking');
+      try {
+        const exists = await instance.checkNumberExists(num.digits);
+        if (exists) {
+          updateNumberStatus(num.id, 'valid');
+          valid++;
+        } else {
+          updateNumberStatus(num.id, 'invalid', 'Number not registered on WhatsApp');
+        }
+      } catch (err) {
+        updateNumberStatus(num.id, 'error', err instanceof Error ? err.message : 'Check failed');
+      }
+      checked++;
+      excludeIds.push(num.id);
+
+      broadcastToClients({
+        type: 'validation_progress',
+        jobId: `val_${datasetId}`,
+        datasetId,
+        current: checked,
+        total,
+        result: { digits: num.digits, valid: checked },
+        counts: { total, pending: total - checked, valid, invalid: checked - valid, error: 0, campaign: valid, staff: 0, excluded: 0 },
+      });
+    });
+
+    await Promise.all(promises);
+    if (checked < total) await processBatch();
+    else {
+      broadcastToClients({
+        type: 'validation_complete',
+        jobId: `val_${datasetId}`,
+        result: { total, valid, invalid: total - valid },
+      });
+    }
+  };
+
+  processBatch().catch(err => {
+    console.error(`[Validate] Error processing dataset ${datasetId}:`, err);
+    broadcastToClients({
+      type: 'validation_error',
+      jobId: `val_${datasetId}`,
+      error: err instanceof Error ? err.message : 'Validation failed',
+    });
+  });
+});
 
 export default router;

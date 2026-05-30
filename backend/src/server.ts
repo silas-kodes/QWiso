@@ -114,7 +114,8 @@ app.get('/health', (_req, res) => {
 // API routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/datasets', requireSession, datasetRoutes);
-app.use('/api/whatsapp', requireSession, whatsappRoutes);
+// WhatsApp routes don't require session for QR code display (chicken-and-egg problem)
+app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/exports', requireSession, exportRoutes);
 app.use('/api/sms', requireSession, smsRoutes);
 app.use('/api/messaging', requireSession, messagingRoutes);

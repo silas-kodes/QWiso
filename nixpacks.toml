@@ -7,6 +7,9 @@ nixPkgs = [
   "nodejs_20",
 ]
 
+[variables]
+NODE_VERSION = "20"
+
 [phases.install]
 cmds = [
   "cd backend && npm install --include=dev",

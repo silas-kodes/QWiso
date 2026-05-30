@@ -228,7 +228,7 @@ export function Campaigns() {
   // Start Campaign
   const handleStart = async (id: string) => {
     try {
-      const res = await apiFetch<{ success: boolean; message: string }>(`/api/campaigns/${id}/start`, {
+      await apiFetch(`/api/campaigns/${id}/start`, {
         method: 'POST',
       })
       setCampaigns(campaigns.map(c => c.id === id ? { ...c, status: 'running' } : c))

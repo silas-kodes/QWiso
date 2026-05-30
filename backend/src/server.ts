@@ -12,7 +12,7 @@ import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 // Import database (initializes connection)
 import './db/db.js';
@@ -139,34 +139,57 @@ initializeWebSocket(server);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// On Railway (Nixpacks): project root = /app, server.js = /app/backend/dist/server.js
-// Local dev: server.js = <project>/backend/dist/server.js
+// On Railway: project root = /app, backend/dist/server.js = /app/backend/dist/server.js
 const possibleDistPaths = [
-  join(__dirname, '../../frontend/dist'),          // from dist/server.js
-  join(__dirname, '../../../frontend/dist'),        // from src/server.ts (tsx watch)
-  join(process.cwd(), 'frontend', 'dist'),           // from CWD
+  join(__dirname, '../../frontend/dist'),
+  join(__dirname, '../../../frontend/dist'),
+  join(process.cwd(), '..', 'frontend', 'dist'),
+  '/app/frontend/dist',
 ];
 
 let frontendDist = possibleDistPaths.find(p => existsSync(p));
 
+const MIME_TYPES: Record<string, string> = {
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.json': 'application/json',
+  '.map': 'application/json',
+};
+
 if (frontendDist) {
   console.log(`[Server] Serving frontend from: ${frontendDist}`);
-  // Serve Vite build assets with explicit MIME types
-  app.use(express.static(frontendDist, {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
-      else if (path.endsWith('.css')) res.setHeader('Content-Type', 'text/css');
-      else if (path.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
-    },
-  }));
+  const indexHtml = readFileSync(join(frontendDist, 'index.html'), 'utf-8');
 
-  // SPA fallback — unmatched routes serve index.html for React Router
-  app.get('*', (_req, res) => {
-    res.sendFile(join(frontendDist!, 'index.html'));
+  app.use((req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/') || req.path.startsWith('/ws') || req.path === '/health') {
+      next();
+      return;
+    }
+    const filePath = join(frontendDist!, req.path === '/' ? 'index.html' : req.path);
+    if (!existsSync(filePath)) {
+      if (req.path.includes('.')) {
+        res.status(404).end();
+        return;
+      }
+      res.setHeader('Content-Type', 'text/html');
+      res.send(indexHtml);
+      return;
+    }
+    const ext = filePath.substring(filePath.lastIndexOf('.'));
+    res.setHeader('Content-Type', MIME_TYPES[ext] || 'application/octet-stream');
+    res.sendFile(filePath);
   });
 } else {
   console.warn(`[Server] Frontend dist not found (tried: ${possibleDistPaths.join(', ')}) — serving API only`);
-  // No frontend build — return JSON 404 for unknown routes
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
   });

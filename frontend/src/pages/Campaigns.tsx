@@ -228,12 +228,14 @@ export function Campaigns() {
   // Start Campaign
   const handleStart = async (id: string) => {
     try {
-      const res = await fetch(apiUrl(`/api/campaigns/${id}/start`), { method: 'POST', credentials: 'include' })
-      if (res.ok) {
-        setCampaigns(campaigns.map(c => c.id === id ? { ...c, status: 'running' } : c))
-      }
+      const res = await apiFetch<{ success: boolean; message: string }>(`/api/campaigns/${id}/start`, {
+        method: 'POST',
+      })
+      setCampaigns(campaigns.map(c => c.id === id ? { ...c, status: 'running' } : c))
     } catch (err) {
-      console.error('Failed to start campaign:', err)
+      const msg = err instanceof Error ? err.message : 'Failed to start campaign'
+      console.error('Failed to start campaign:', msg)
+      setError(msg)
     }
   }
 
@@ -290,7 +292,7 @@ export function Campaigns() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => { setShowCreateModal(true); setError(null); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white font-semibold shadow-lg hover:shadow-pf-accent/20 transition-all duration-200"
         >
           <Plus className="w-5 h-5" />
@@ -322,6 +324,15 @@ export function Campaigns() {
           </div>
         </div>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="p-3 rounded-lg bg-pf-error/10 border border-pf-error/30 text-pf-error text-sm flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="ml-auto text-pf-error/60 hover:text-pf-error">&times;</button>
+        </div>
+      )}
 
       {/* Campaign List */}
       {filteredCampaigns.length === 0 ? (

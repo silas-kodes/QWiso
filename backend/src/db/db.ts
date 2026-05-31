@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS wa_sessions (
   state TEXT NOT NULL,
   phone TEXT,
   qr_code TEXT,
+  creds_json TEXT,
   connected_at INTEGER,
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
@@ -171,6 +172,9 @@ try {
 } catch (_) { /* column already exists */ }
 try {
   db.exec(`ALTER TABLE numbers ADD COLUMN recipient_group TEXT DEFAULT 'unclassified'`);
+} catch (_) { /* column already exists */ }
+try {
+  db.exec(`ALTER TABLE wa_sessions ADD COLUMN creds_json TEXT`);
 } catch (_) { /* column already exists */ }
 db.exec(`UPDATE numbers SET recipient_group = 'unclassified' WHERE recipient_group IS NULL`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_numbers_dataset_group ON numbers(dataset_id, recipient_group)`);

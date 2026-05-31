@@ -82,29 +82,39 @@ router.post('/', (req, res) => {
 
 router.post('/:id/start', (req, res) => {
   const id = req.params.id;
+  console.log(`[CAMPAIGN START] POST /campaigns/${id}/start - Request received`);
   const campaign = getCampaign(id);
   
   if (!campaign) {
+    console.log(`[CAMPAIGN START] Campaign ${id} not found`);
     res.status(404).json({ error: 'Campaign not found' });
     return;
   }
+  console.log(`[CAMPAIGN START] Campaign ${id} found, current status: ${campaign.status}`);
 
   if (campaign.status === 'running') {
+    console.log(`[CAMPAIGN START] Campaign ${id} already running`);
     res.status(400).json({ error: 'Campaign already running' });
     return;
   }
 
   // Pre-check: ensure the Action Hub payload contains only validated campaign targets
+  console.log(`[CAMPAIGN START] Checking contact status counts for dataset ${campaign.dataset_id}`);
   const counts = getCampaignContactStatusCounts(campaign.dataset_id);
+  console.log(`[CAMPAIGN START] Contact counts - sent: ${counts.sent}, failed: ${counts.failed}, pending: ${counts.pending}, totalTargets: ${counts.totalTargets}`);
   if (counts.pending === 0) {
+    console.log(`[CAMPAIGN START] No valid uncontacted numbers in dataset ${campaign.dataset_id}`);
     res.status(400).json({ 
       error: 'No valid uncontacted numbers in this dataset. Validate numbers first before starting a campaign.' 
     });
     return;
   }
 
+  console.log(`[CAMPAIGN START] Getting validated campaign numbers for dataset ${campaign.dataset_id}, limit: ${counts.pending}`);
   const payload = getValidatedCampaignNumbers(campaign.dataset_id, counts.pending);
+  console.log(`[CAMPAIGN START] Retrieved ${payload.length} validated numbers`);
   if (payload.length !== counts.pending) {
+    console.log(`[CAMPAIGN START] Payload validation failed - expected ${counts.pending}, got ${payload.length}`);
     res.status(500).json({
       error: 'Action Hub payload validation failed',
       message: `Expected ${counts.pending} validated targets but found ${payload.length}. Campaign launch halted.`,
@@ -112,12 +122,16 @@ router.post('/:id/start', (req, res) => {
     return;
   }
 
+  console.log(`[CAMPAIGN START] Setting campaign total contacts to ${payload.length}`);
   setCampaignTotalContacts(campaign.id, payload.length);
 
+  console.log(`[CAMPAIGN START] Enqueuing job for campaign ${id}`);
   jobQueue.enqueue(id, async (token: CancelToken) => {
+    console.log(`[CAMPAIGN START] Job execution started for campaign ${id}`);
     await runCampaignJob(id, token);
+    console.log(`[CAMPAIGN START] Job execution completed for campaign ${id}`);
   });
-
+  console.log(`[CAMPAIGN START] Job enqueued for campaign ${id}, returning success response`);
   res.json({ success: true, message: 'Campaign started', validContacts: payload.length });
 });
 

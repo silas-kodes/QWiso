@@ -380,23 +380,29 @@ export function getRunningJobs(): Job[] {
 }
 
 // WhatsApp Session operations
-export function saveWASession(id: string, name: string, state: string, phone: string | null): void {
+export function saveWASession(id: string, name: string, state: string, phone: string | null, credsJson?: string | null): void {
   const now = Math.floor(Date.now() / 1000);
   const stmt = db.prepare(`
-    INSERT INTO wa_sessions (id, name, state, phone, updated_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO wa_sessions (id, name, state, phone, creds_json, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
       state = excluded.state,
       phone = excluded.phone,
+      creds_json = excluded.creds_json,
       updated_at = excluded.updated_at
   `);
-  stmt.run(id, name, state, phone, now);
+  stmt.run(id, name, state, phone, credsJson || null, now);
 }
 
-export function getAllWASessions(): { id: string, name: string, state: string, phone: string | null }[] {
-  const stmt = db.prepare('SELECT id, name, state, phone FROM wa_sessions');
-  return stmt.all() as { id: string, name: string, state: string, phone: string | null }[];
+export function getAllWASessions(): { id: string, name: string, state: string, phone: string | null, creds_json: string | null }[] {
+  const stmt = db.prepare('SELECT id, name, state, phone, creds_json FROM wa_sessions');
+  return stmt.all() as { id: string, name: string, state: string, phone: string | null, creds_json: string | null }[];
+}
+
+export function getWASession(id: string): { id: string, name: string, state: string, phone: string | null, creds_json: string | null } | undefined {
+  const stmt = db.prepare('SELECT id, name, state, phone, creds_json FROM wa_sessions WHERE id = ?');
+  return stmt.get(id) as { id: string, name: string, state: string, phone: string | null, creds_json: string | null } | undefined;
 }
 
 export function deleteWASession(id: string): void {

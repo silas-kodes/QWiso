@@ -18,7 +18,7 @@ import { dirname } from 'path';
 import { EventEmitter } from 'events';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
-import { saveWASession, getActiveAutomationRules } from '../db/queries.js';
+import { saveWASession, getWASession, getActiveAutomationRules } from '../db/queries.js';
 import { isoCountryFromDigits } from './phone-region.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -135,17 +135,30 @@ class WhatsAppInstance {
   }
 
   private async connect(): Promise<void> {
-    const { existsSync, mkdirSync } = await import('fs');
+    const { existsSync, mkdirSync, writeFileSync, readFileSync } = await import('fs');
     
     if (!existsSync(this.authPath)) {
       mkdirSync(this.authPath, { recursive: true });
     }
 
+    // Try to restore credentials from database first
+    const savedSession = getWASession(this.id);
+    const sessionPath = join(this.authPath, 'creds.json');
+    let isResuming = existsSync(sessionPath);
+
+    if (!isResuming && savedSession?.creds_json) {
+      console.log(`[WA:${this.id}] Restoring credentials from database`);
+      try {
+        writeFileSync(sessionPath, savedSession.creds_json, 'utf8');
+        isResuming = true;
+      } catch (err) {
+        console.error(`[WA:${this.id}] Failed to restore credentials from DB:`, err);
+      }
+    }
+
     const { state: authState, saveCreds } = await useMultiFileAuthState(this.authPath);
     const { version } = await fetchLatestBaileysVersion();
     const logger = pino({ level: 'silent' });
-    const sessionPath = join(this.authPath, 'creds.json');
-    const isResuming = existsSync(sessionPath);
     
     if (isResuming) {
       console.log(`[WA:${this.id}] Found existing session at ${this.authPath}. Resuming…`);
@@ -160,6 +173,20 @@ class WhatsAppInstance {
       pairingCode: null, 
       error: null 
     });
+
+    // Wrap saveCreds to also save to database
+    const originalSaveCreds = saveCreds;
+    const wrappedSaveCreds = async () => {
+      await originalSaveCreds();
+      // Save credentials to database for persistence
+      try {
+        const credsContent = readFileSync(sessionPath, 'utf8');
+        saveWASession(this.id, this.name, this.status.state, this.status.phone, credsContent);
+        console.log(`[WA:${this.id}] Credentials saved to database`);
+      } catch (err) {
+        console.error(`[WA:${this.id}] Failed to save credentials to DB:`, err);
+      }
+    };
 
     const socketConfig: Parameters<typeof makeWASocket>[0] = {
       version,
@@ -181,7 +208,7 @@ class WhatsAppInstance {
 
     this.socket = makeWASocket(socketConfig);
 
-    this.socket.ev.on('creds.update', saveCreds);
+    this.socket.ev.on('creds.update', wrappedSaveCreds);
     this.socket.ev.on('connection.update', async (update: Partial<ConnectionState>) => {
       const { connection, lastDisconnect, qr } = update;
 

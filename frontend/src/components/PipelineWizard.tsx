@@ -937,10 +937,9 @@ export function PipelineWizard() {
                     <motion.input
                       whileFocus={{ scale: 1.02 }}
                       type="number"
-                      min={10}
-                      max={10000}
+                      min={1}
                       value={genQuantity}
-                      onChange={(e) => setGenQuantity(Math.min(10000, Math.max(10, Number(e.target.value))))}
+                      onChange={(e) => setGenQuantity(Number(e.target.value) || 0)}
                       className="w-full bg-pf-surface/80 border border-pf-border/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all"
                     />
                   </motion.div>

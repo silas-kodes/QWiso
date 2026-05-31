@@ -282,184 +282,329 @@ export function Campaigns() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-            <Send className="w-6 h-6 text-pf-accent" />
-            Campaigns
-          </h1>
-          <p className="text-pf-text-muted text-sm">
-            Launch anti-ban resilient text & WhatsApp broadcasting campaigns
-          </p>
-        </div>
-        <button
-          onClick={() => { setShowCreateModal(true); setError(null); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white font-semibold shadow-lg hover:shadow-pf-accent/20 transition-all duration-200"
-        >
-          <Plus className="w-5 h-5" />
-          Create Campaign
-        </button>
-      </div>
-
-      {/* Search and Stats bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:max-w-md">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-pf-text-muted" />
-          <input
-            type="text"
-            placeholder="Search campaigns..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-pf-surface border border-pf-border text-white placeholder-pf-text-muted focus:border-pf-accent transition-colors"
+    <div className="relative">
+      {/* Dynamic Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        {/* Animated gradient orbs */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 360],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-pf-accent/20 to-pf-info/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [360, 180, 0],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-pf-success/20 to-pf-accent/20 rounded-full blur-3xl"
+        />
+        {/* Floating particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.2, 0.5, 0.2],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 4 + i * 0.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.3,
+            }}
+            className="absolute w-2 h-2 bg-pf-accent/30 rounded-full blur-sm"
+            style={{
+              left: `${10 + i * 15}%`,
+              top: `${20 + i * 12}%`,
+            }}
           />
-        </div>
-
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <div className="px-3 py-1.5 rounded-lg bg-pf-surface border border-pf-border text-xs text-pf-text-muted flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-pf-success" />
-            Completed: {campaigns.filter(c => c.status === 'completed').length}
-          </div>
-          <div className="px-3 py-1.5 rounded-lg bg-pf-surface border border-pf-border text-xs text-pf-text-muted flex items-center gap-1.5">
-            <RefreshCw className="w-4 h-4 text-pf-info animate-spin-slow" />
-            Active: {campaigns.filter(c => c.status === 'running').length}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Error banner */}
-      {error && (
-        <div className="p-3 rounded-lg bg-pf-error/10 border border-pf-error/30 text-pf-error text-sm flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-pf-error/60 hover:text-pf-error">&times;</button>
-        </div>
-      )}
-
-      {/* Campaign List */}
-      {filteredCampaigns.length === 0 ? (
-        <div className="glass-panel rounded-xl p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-pf-surface-light flex items-center justify-center">
-            <Send className="w-8 h-8 text-pf-text-dim" />
-          </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No campaigns found</h3>
-          <p className="text-pf-text-muted text-sm mb-4">
-            Create a campaign to automatically message your validated datasets
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredCampaigns.map((camp) => {
-            const processed = camp.sent_contacts + camp.failed_contacts
-            const progress = camp.total_contacts > 0 
-              ? Math.round((processed / camp.total_contacts) * 100)
-              : 0
-
-            const statusColors = {
-              pending: 'text-pf-text-muted border-pf-border bg-pf-surface',
-              running: 'text-pf-info border-pf-info/30 bg-pf-info/10',
-              paused: 'text-pf-warning border-pf-warning/30 bg-pf-warning/10',
-              completed: 'text-pf-success border-pf-success/30 bg-pf-success/10',
-              failed: 'text-pf-error border-pf-error/30 bg-pf-error/10'
-            }[camp.status]
-
-            return (
+      <div className="space-y-8">
+        {/* Enhanced Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6"
+        >
+          <div className="space-y-2">
+            <motion.h1
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl font-bold text-white flex items-center gap-3"
+            >
               <motion.div
-                key={camp.id}
-                layout
-                className="glass-panel rounded-xl p-4 sm:p-6 transition-all duration-200"
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center shadow-lg shadow-pf-accent/30"
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                  {/* Info Column */}
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold text-white">{camp.name}</h3>
-                      <span className={`px-2.5 py-0.5 rounded-full border text-xs font-semibold uppercase ${statusColors}`}>
-                        {camp.status}
-                      </span>
-                      <span className="text-xs text-pf-text-muted flex items-center gap-1">
-                        {camp.platform === 'whatsapp' ? (
-                          <>
-                            <Smartphone className="w-3.5 h-3.5 text-pf-success" />
-                            WhatsApp
-                          </>
-                        ) : (
-                          <>
-                            <MessageSquare className="w-3.5 h-3.5 text-pf-info" />
-                            SMS Gateway
-                          </>
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-pf-text-muted">
-                      <span>Dataset: <strong className="text-white">{camp.dataset_name}</strong></span>
-                      <span>•</span>
-                      <span>Created: <strong>{new Date(camp.created_at * 1000).toLocaleDateString()}</strong></span>
-                      <span>•</span>
-                      <span>Rate limit: <strong>{camp.rate_per_hour}/hour</strong></span>
-                    </div>
-
-                    {/* Progress details */}
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-pf-text-muted">Broadcast Progress</span>
-                        <span className="text-white">{camp.sent_contacts} sent, {camp.failed_contacts} failed / {camp.total_contacts} ({progress}%)</span>
-                      </div>
-                      <div className="w-full bg-pf-surface rounded-full h-2 overflow-hidden border border-pf-border">
-                        <div
-                          className={`h-full transition-all duration-500 rounded-full ${
-                            camp.status === 'completed'
-                              ? 'bg-pf-success'
-                              : camp.status === 'failed'
-                              ? 'bg-pf-error'
-                              : 'bg-pf-accent'
-                          }`}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions Column */}
-                  <div className="flex items-center gap-3 lg:self-center self-end">
-                    {camp.status === 'running' ? (
-                      <button
-                        onClick={() => handlePause(camp.id)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-pf-warning/20 border border-pf-warning/30 text-pf-warning hover:bg-pf-warning/30 transition-colors text-sm font-semibold"
-                      >
-                        <Pause className="w-4 h-4" />
-                        Pause
-                      </button>
-                    ) : (
-                      (camp.status === 'pending' || camp.status === 'paused' || camp.status === 'failed') && (
-                        <button
-                          onClick={() => handleStart(camp.id)}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-pf-success/20 border border-pf-success/30 text-pf-success hover:bg-pf-success/30 transition-colors text-sm font-semibold"
-                        >
-                          <Play className="w-4 h-4" />
-                          Start
-                        </button>
-                      )
-                    )}
-
-                    <button
-                      onClick={() => handleDelete(camp.id)}
-                      className="p-2 rounded-lg bg-pf-surface border border-pf-border text-pf-text-muted hover:text-pf-error hover:border-pf-error/40 transition-colors"
-                      title="Delete Campaign"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                <Send className="w-6 h-6 text-white" />
               </motion.div>
-            )
-          })}
-        </div>
-      )}
+              Campaigns
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-pf-text-muted text-sm"
+            >
+              Launch anti-ban resilient text & WhatsApp broadcasting campaigns
+            </motion.p>
+          </div>
+          <motion.button
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { setShowCreateModal(true); setError(null); }}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white font-bold shadow-lg shadow-pf-accent/30 transition-all duration-200"
+          >
+            <Plus className="w-5 h-5" />
+            Create Campaign
+          </motion.button>
+        </motion.div>
 
-      {/* Create Modal */}
+        {/* Enhanced Search and Stats bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-col md:flex-row gap-6 items-center justify-between"
+        >
+          <div className="relative w-full md:max-w-md">
+            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-pf-text-muted" />
+            <motion.input
+              whileFocus={{ scale: 1.02 }}
+              type="text"
+              placeholder="Search campaigns..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-white placeholder-pf-text-muted focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3 w-full md:w-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="px-4 py-2 rounded-xl bg-gradient-to-br from-pf-surface to-pf-surface-light border border-pf-border/50 text-xs text-pf-text-muted flex items-center gap-2 shadow-md"
+            >
+              <CheckCircle2 className="w-4 h-4 text-pf-success" />
+              Completed: {campaigns.filter(c => c.status === 'completed').length}
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="px-4 py-2 rounded-xl bg-gradient-to-br from-pf-surface to-pf-surface-light border border-pf-border/50 text-xs text-pf-text-muted flex items-center gap-2 shadow-md"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                <RefreshCw className="w-4 h-4 text-pf-info" />
+              </motion.div>
+              Active: {campaigns.filter(c => c.status === 'running').length}
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Enhanced Error banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="p-4 rounded-2xl bg-gradient-to-r from-pf-error/15 to-pf-error/10 border border-pf-error/30 text-pf-error text-sm flex items-start gap-3 shadow-lg"
+            >
+              <motion.div
+                animate={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.5, repeat: 2 }}
+              >
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+              </motion.div>
+              <span className="flex-1">{error}</span>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setError(null)}
+                className="text-pf-error/60 hover:text-pf-error"
+              >
+                &times;
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Enhanced Campaign List */}
+        {filteredCampaigns.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-panel rounded-3xl p-16 text-center border border-pf-border/30"
+          >
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-pf-surface-light to-pf-surface flex items-center justify-center shadow-lg"
+            >
+              <Send className="w-10 h-10 text-pf-text-dim" />
+            </motion.div>
+            <h3 className="text-xl font-bold text-white mb-3">No campaigns found</h3>
+            <p className="text-pf-text-muted text-sm">
+              Create a campaign to automatically message your validated datasets
+            </p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {filteredCampaigns.map((camp, index) => {
+              const processed = camp.sent_contacts + camp.failed_contacts
+              const progress = camp.total_contacts > 0
+                ? Math.round((processed / camp.total_contacts) * 100)
+                : 0
+
+              const statusColors = {
+                pending: 'text-pf-text-muted border-pf-border bg-pf-surface',
+                running: 'text-pf-info border-pf-info/30 bg-pf-info/10',
+                paused: 'text-pf-warning border-pf-warning/30 bg-pf-warning/10',
+                completed: 'text-pf-success border-pf-success/30 bg-pf-success/10',
+                failed: 'text-pf-error border-pf-error/30 bg-pf-error/10'
+              }[camp.status]
+
+              return (
+                <motion.div
+                  key={camp.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.01, y: -4 }}
+                  layout
+                  className="glass-panel rounded-2xl p-6 sm:p-8 transition-all duration-300 shadow-lg hover:shadow-2xl border border-pf-border/30"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                    {/* Info Column */}
+                    <div className="space-y-4 flex-1">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <h3 className="text-xl font-bold text-white">{camp.name}</h3>
+                        <motion.span
+                          animate={{ scale: [1, 1.05, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className={`px-3 py-1 rounded-full border text-xs font-bold uppercase ${statusColors}`}
+                        >
+                          {camp.status}
+                        </motion.span>
+                        <span className="text-xs text-pf-text-muted flex items-center gap-2 px-3 py-1 rounded-xl bg-pf-surface/50 border border-pf-border/30">
+                          {camp.platform === 'whatsapp' ? (
+                            <>
+                              <Smartphone className="w-4 h-4 text-pf-success" />
+                              WhatsApp
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare className="w-4 h-4 text-pf-info" />
+                              SMS Gateway
+                            </>
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-pf-text-muted">
+                        <span>Dataset: <strong className="text-white">{camp.dataset_name}</strong></span>
+                        <span className="text-pf-border/50">•</span>
+                        <span>Created: <strong>{new Date(camp.created_at * 1000).toLocaleDateString()}</strong></span>
+                        <span className="text-pf-border/50">•</span>
+                        <span>Rate limit: <strong>{camp.rate_per_hour}/hour</strong></span>
+                      </div>
+
+                      {/* Enhanced Progress details */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm font-semibold">
+                          <span className="text-pf-text-muted">Broadcast Progress</span>
+                          <span className="text-white">{camp.sent_contacts} sent, {camp.failed_contacts} failed / {camp.total_contacts} ({progress}%)</span>
+                        </div>
+                        <div className="w-full bg-pf-surface/80 rounded-full h-3 overflow-hidden border border-pf-border/40 p-[2px]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className={`h-full rounded-full relative ${
+                              camp.status === 'completed'
+                                ? 'bg-gradient-to-r from-pf-success to-pf-success/80'
+                                : camp.status === 'failed'
+                                ? 'bg-gradient-to-r from-pf-error to-pf-error/80'
+                                : 'bg-gradient-to-r from-pf-accent to-pf-accent-glow'
+                            }`}
+                          >
+                            <motion.div
+                              animate={{ x: ['-100%', '100%'] }}
+                              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            />
+                          </motion.div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Actions Column */}
+                    <div className="flex items-center gap-4 lg:self-center self-end">
+                      {camp.status === 'running' ? (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handlePause(camp.id)}
+                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-pf-warning/20 to-pf-warning/10 border border-pf-warning/30 text-pf-warning hover:from-pf-warning/30 hover:to-pf-warning/20 transition-all text-sm font-bold shadow-md"
+                        >
+                          <Pause className="w-4 h-4" />
+                          Pause
+                        </motion.button>
+                      ) : (
+                        (camp.status === 'pending' || camp.status === 'paused' || camp.status === 'failed') && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleStart(camp.id)}
+                            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-pf-success/20 to-pf-success/10 border border-pf-success/30 text-pf-success hover:from-pf-success/30 hover:to-pf-success/20 transition-all text-sm font-bold shadow-md"
+                          >
+                            <Play className="w-4 h-4" />
+                            Start
+                          </motion.button>
+                        )
+                      )}
+
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleDelete(camp.id)}
+                        className="p-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-pf-text-muted hover:text-pf-error hover:border-pf-error/40 transition-all shadow-md"
+                        title="Delete Campaign"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Enhanced Create Modal */}
       <AnimatePresence>
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -474,58 +619,87 @@ export function Campaigns() {
 
             {/* Content */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="glass-panel w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-pf-border max-h-[90vh] flex flex-col"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="glass-panel w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl relative z-10 border border-pf-border/40 max-h-[90vh] flex flex-col"
             >
-              <div className="px-6 py-4 border-b border-pf-border flex items-center justify-between bg-pf-surface">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-pf-accent" />
+              <div className="px-8 py-6 border-b border-pf-border/40 flex items-center justify-between bg-gradient-to-r from-pf-surface to-pf-surface-light">
+                <motion.h3
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-xl font-bold text-white flex items-center gap-3"
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center shadow-lg shadow-pf-accent/30"
+                  >
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </motion.div>
                   New Anti-Ban Messaging Campaign
-                </h3>
-                <button
+                </motion.h3>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setShowCreateModal(false)}
-                  className="text-pf-text-muted hover:text-white transition-colors"
+                  className="text-pf-text-muted hover:text-white transition-colors p-2 rounded-xl hover:bg-pf-surface/50"
                 >
                   &times;
-                </button>
+                </motion.button>
               </div>
 
-              <form onSubmit={handleCreate} className="p-6 space-y-4 overflow-y-auto flex-1">
+              <form onSubmit={handleCreate} className="p-8 space-y-6 overflow-y-auto flex-1">
                 {error && (
-                  <div className="p-3 rounded-lg bg-pf-error/10 border border-pf-error/30 text-pf-error text-sm flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-2xl bg-gradient-to-r from-pf-error/15 to-pf-error/10 border border-pf-error/30 text-pf-error text-sm flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                     <span>{error}</span>
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* Campaign Name */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="space-y-2"
+                >
+                  <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider">
                     Campaign Name *
                   </label>
-                  <input
+                  <motion.input
+                    whileFocus={{ scale: 1.01 }}
                     type="text"
                     required
                     placeholder="e.g. QWISO Beta Launch Blast"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-pf-surface border border-pf-border text-white focus:border-pf-accent transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-white focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all"
                   />
-                </div>
+                </motion.div>
 
                 {/* Dataset and Platform */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+                >
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider">
                       Target Dataset *
                     </label>
-                    <select
+                    <motion.select
+                      whileFocus={{ scale: 1.01 }}
                       required
                       value={datasetId}
                       onChange={(e) => setDatasetId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-pf-surface border border-pf-border text-white focus:border-pf-accent transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-white focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all appearance-none"
                     >
                       <option value="">Select a dataset</option>
                       {datasets.map(d => (
@@ -533,88 +707,106 @@ export function Campaigns() {
                           {d.name} ({d.quantity} numbers)
                         </option>
                       ))}
-                    </select>
+                    </motion.select>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider">
                       Gateway Platform
                     </label>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
-                      <button
+                    <div className="grid grid-cols-2 gap-3 mt-1">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         type="button"
                         onClick={() => {
                           setPlatform('whatsapp')
                         }}
-                        className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-bold transition-all ${
                           platform === 'whatsapp'
-                            ? 'bg-pf-success/15 border-pf-success text-pf-success shadow-lg shadow-pf-success/5'
-                            : 'bg-pf-surface border-pf-border text-pf-text-muted hover:text-white'
+                            ? 'bg-gradient-to-r from-pf-success/20 to-pf-success/10 border-pf-success text-pf-success shadow-lg shadow-pf-success/20'
+                            : 'bg-pf-surface/80 border-pf-border/50 text-pf-text-muted hover:text-white'
                         }`}
                       >
                         <Smartphone className="w-4 h-4" />
                         WhatsApp
-                      </button>
+                      </motion.button>
 
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         type="button"
                         onClick={() => {
                           resetImage()
                           setPlatform('sms')
                         }}
-                        className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-bold transition-all ${
                           platform === 'sms'
-                            ? 'bg-pf-info/15 border-pf-info text-pf-info shadow-lg shadow-pf-info/5'
-                            : 'bg-pf-surface border-pf-border text-pf-text-muted hover:text-white'
+                            ? 'bg-gradient-to-r from-pf-info/20 to-pf-info/10 border-pf-info text-pf-info shadow-lg shadow-pf-info/20'
+                            : 'bg-pf-surface/80 border-pf-border/50 text-pf-text-muted hover:text-white'
                         }`}
                       >
                         <MessageSquare className="w-4 h-4" />
                         SMS Gateway
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Message Template */}
-                <div className="space-y-1">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="space-y-2"
+                >
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider flex items-center gap-1">
                       Message Template
                     </label>
-                    <span className="text-[10px] text-pf-text-dim flex items-center gap-1">
+                    <span className="text-[10px] text-pf-text-dim flex items-center gap-1 px-2 py-1 rounded-lg bg-pf-surface/50 border border-pf-border/30">
                       <BookOpen className="w-3 h-3" />
                       Supports: <code>{`{name}`}</code>, <code>{`{phone}`}</code>
                     </span>
                   </div>
-                  <textarea
+                  <motion.textarea
+                    whileFocus={{ scale: 1.01 }}
                     rows={4}
                     placeholder="Hello {name}! Thank you for joining QWISO. Best regards!"
                     value={template}
                     onChange={(e) => setTemplate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-pf-surface border border-pf-border text-white focus:border-pf-accent transition-colors font-mono text-sm resize-none"
+                    className="w-full px-4 py-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-white focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all font-mono text-sm resize-none"
                   />
                   <p className="text-[10px] text-pf-text-dim">
                     Required for SMS. WhatsApp campaigns may omit this if an image is attached.
                   </p>
-                </div>
+                </motion.div>
 
                 {platform === 'whatsapp' && (
-                  <div className="space-y-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="space-y-3"
+                  >
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                      <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider">
                         WhatsApp Image Attachment
                       </label>
                       {imageFile && (
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           type="button"
                           onClick={resetImage}
-                          className="text-[10px] text-pf-accent hover:text-white"
+                          className="text-[10px] text-pf-accent hover:text-white px-3 py-1 rounded-lg bg-pf-accent/10 border border-pf-accent/30"
                         >
                           Remove
-                        </button>
+                        </motion.button>
                       )}
                     </div>
-                    <input
+                    <motion.input
+                      whileFocus={{ scale: 1.01 }}
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e.target.files?.[0] ?? null)}
@@ -622,85 +814,108 @@ export function Campaigns() {
                     />
                     {imageError && <p className="text-xs text-pf-error">{imageError}</p>}
                     {imagePreview && (
-                      <img
+                      <motion.img
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         src={imagePreview}
                         alt="Campaign image preview"
-                        className="mt-2 rounded-xl border border-pf-border max-h-40 object-contain"
+                        className="mt-3 rounded-2xl border border-pf-border/50 max-h-48 object-contain shadow-lg"
                       />
                     )}
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* Advanced Rate Limits */}
-                <div className="border-t border-pf-border pt-4">
-                  <h4 className="text-xs font-bold text-pf-accent uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Sliders className="w-4 h-4" />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="border-t border-pf-border/40 pt-6"
+                >
+                  <h4 className="text-xs font-bold text-pf-accent uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Sliders className="w-4 h-4" />
+                    </motion.div>
                     Anti-Ban / Rate Limiting Controls
                   </h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider">
                         Max Broadcasts (Optional)
                       </label>
-                      <input
+                      <motion.input
+                        whileFocus={{ scale: 1.01 }}
                         type="number"
                         placeholder="Leave empty for all contacts"
                         value={maxMessages}
                         onChange={(e) => setMaxMessages(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-lg bg-pf-surface border border-pf-border text-white focus:border-pf-accent transition-colors"
+                        className="w-full px-4 py-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-white focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all"
                       />
                     </div>
 
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="flex justify-between">
-                        <label className="text-xs font-semibold text-pf-text-muted uppercase tracking-wider">
+                        <label className="text-xs font-bold text-pf-text-muted uppercase tracking-wider">
                           Inter-Message Delay *
                         </label>
                         <span className="text-xs font-bold text-pf-accent">{rateLimitDelay} seconds</span>
                       </div>
-                      <input
+                      <motion.input
+                        whileFocus={{ scale: 1.01 }}
                         type="range"
                         min={1}
                         max={30}
                         value={rateLimitDelay}
                         onChange={(e) => setRateLimitDelay(Number(e.target.value))}
-                        className="w-full mt-2"
+                        className="w-full mt-2 accent-pf-accent h-2 bg-pf-bg rounded-xl appearance-none cursor-pointer"
                       />
                       <span className="text-[10px] text-pf-text-dim block mt-1">
                         Longer delays simulate authentic human interactions, minimizing ban risks.
                       </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
-                {/* Footer Controls */}
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-pf-border">
-                  <button
+                {/* Enhanced Footer Controls */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="flex items-center justify-end gap-4 pt-6 border-t border-pf-border/40"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 rounded-lg bg-pf-surface border border-pf-border text-pf-text-muted hover:text-white transition-colors"
+                    className="px-6 py-3 rounded-xl bg-pf-surface/80 border border-pf-border/50 text-pf-text-muted hover:text-white transition-all font-semibold"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 rounded-lg bg-pf-accent hover:bg-pf-accent-glow text-white font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-8 py-3 rounded-xl bg-gradient-to-r from-pf-accent to-pf-accent-glow hover:from-pf-accent-glow hover:to-pf-accent text-white font-bold transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-pf-accent/30"
                   >
                     {submitting ? (
                       <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <RefreshCw className="w-5 h-5 animate-spin" />
                         Saving...
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4" />
+                        <Send className="w-5 h-5" />
                         Create & Save
                       </>
                     )}
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               </form>
             </motion.div>
           </div>

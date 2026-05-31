@@ -17,7 +17,6 @@ import {
   MessageSquare,
   Download,
   ArrowRight,
-  Sparkles,
   Database,
   QrCode,
   XCircle
@@ -52,10 +51,10 @@ interface Dataset {
 }
 
 const STEPS = [
-  { number: 1, label: 'Link Gateway', desc: 'Connect WhatsApp accounts', icon: Smartphone },
-  { number: 2, label: 'Generator', desc: 'Create phone number lists', icon: Zap },
-  { number: 3, label: 'Validator', desc: 'Check WhatsApp numbers', icon: Shield },
-  { number: 4, label: 'Action Hub', desc: 'Launch rotated campaigns', icon: Send },
+  { number: 1, label: 'Link Gateway', icon: Smartphone },
+  { number: 2, label: 'Generator', icon: Zap },
+  { number: 3, label: 'Validator', icon: Shield },
+  { number: 4, label: 'Action Hub', icon: Send },
 ]
 
 export function PipelineWizard() {
@@ -425,34 +424,6 @@ export function PipelineWizard() {
 
         {/* ─── Header & Switch Info ─── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="flex items-center gap-3"
-            >
-              <motion.div
-                animate={{
-                  rotate: [0, 5, -5, 0],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center shadow-lg shadow-pf-accent/30"
-              >
-                <Sparkles className="w-6 h-6 text-white" />
-              </motion.div>
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">
-                  Interactive Funnel Pipeline
-                </h2>
-                <p className="text-xs text-pf-text-muted mt-1">
-                  End-to-end guided sequence mapping connections to target campaigns
-                </p>
-              </div>
-            </motion.div>
-          </div>
-
           <div className="flex flex-wrap items-center gap-4">
             {/* Enhanced Toggle Switch */}
             <motion.div
@@ -633,17 +604,12 @@ export function PipelineWizard() {
 
                 <motion.div
                   animate={{ y: isActive ? 2 : 0 }}
-                  className="mt-3 space-y-1"
+                  className="mt-3"
                 >
                   <span className={`text-xs font-bold tracking-wide transition-colors duration-300 ${
                     isActive ? 'text-white' : 'text-pf-text-muted group-hover:text-white'
                   }`}>
                     {s.label}
-                  </span>
-                  <span className={`text-[10px] text-pf-text-dim transition-colors duration-300 ${
-                    isActive ? 'text-pf-accent' : ''
-                  }`}>
-                    {s.desc}
                   </span>
                 </motion.div>
               </motion.button>

@@ -19,7 +19,8 @@ import {
   ArrowRight,
   Sparkles,
   Database,
-  QrCode
+  QrCode,
+  XCircle
 } from 'lucide-react'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useWebSocketStore } from '../stores/websocket'
@@ -363,144 +364,257 @@ export function PipelineWizard() {
   const activeWASessionReady = activeWA?.state === 'ready'
 
   return (
-    <div className="glass-panel rounded-2xl p-6 sm:p-8 space-y-8 border border-pf-border/40 relative overflow-hidden">
-      
-      {/* Decorative Glowing Backdrop */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-pf-accent/5 rounded-full filter blur-[100px] -z-10 pointer-events-none" />
-
-      {/* ─── Header & Switch Info ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-pf-accent animate-pulse" />
-            Interactive Funnel Pipeline
-          </h2>
-          <p className="text-xs text-pf-text-muted mt-1">
-            End-to-end guided sequence mapping connections to target campaigns
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Toggle Switch */}
-          <div className="flex items-center gap-2.5 bg-pf-surface/60 border border-pf-border/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-sm select-none">
-            <span className="text-xs font-semibold text-pf-text-muted">Auto-Advance</span>
-            <button
-              onClick={toggleAutoAdvance}
-              type="button"
-              className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors duration-300 relative focus:outline-none focus:ring-1 focus:ring-pf-accent/50 ${
-                autoAdvance ? 'bg-pf-accent' : 'bg-pf-bg border border-pf-border/40'
-              }`}
-              title={autoAdvance ? "Disable auto-advance" : "Enable auto-advance"}
-            >
-              <motion.div
-                className="w-4 h-4 rounded-full shadow-md bg-white"
-                layout
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                animate={{ x: autoAdvance ? 14 : 0 }}
-              />
-            </button>
-            <span className={`text-[10px] font-bold uppercase w-8 tracking-wider ${autoAdvance ? 'text-pf-accent' : 'text-pf-text-dim'}`}>
-              {autoAdvance ? 'ON' : 'OFF'}
-            </span>
-          </div>
-
-          {/* Global Auto-Advance Feedback Banner */}
-          <AnimatePresence>
-          {countdown !== null && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-pf-success/15 border border-pf-success/30 px-4 py-2.5 rounded-xl flex items-center justify-between gap-3 text-xs text-pf-success relative overflow-hidden pb-4"
-            >
-              <div className="flex items-center gap-2 z-10">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pf-success opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-pf-success"></span>
-                </span>
-                <span>Auto-advancing step in <strong className="font-bold font-mono text-sm">{countdown}s</strong>...</span>
-              </div>
-              <button
-                onClick={() => {
-                  const target = step + 1
-                  clearCountdown()
-                  if (target <= 4) setStep(target)
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded bg-pf-success/20 text-white font-bold hover:bg-pf-success/30 transition-all z-10"
-              >
-                Proceed Now <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-              
-              {/* Ticking indicator bar at bottom of countdown banner */}
-              <div className="absolute bottom-0 left-0 w-full h-[3px] bg-pf-success/10 overflow-hidden">
-                <motion.div 
-                  className="h-full bg-pf-success shadow-[0_0_8px_rgba(46,196,182,0.8)]"
-                  initial={{ width: '100%' }}
-                  animate={{ width: `${(countdown / 5) * 100}%` }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        </div>
+    <div className="relative">
+      {/* Dynamic Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Animated gradient orbs */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 360],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-pf-accent/20 to-pf-info/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [360, 180, 0],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-pf-success/20 to-pf-accent/20 rounded-full blur-3xl"
+        />
+        {/* Floating particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.2, 0.5, 0.2],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 4 + i * 0.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.3,
+            }}
+            className="absolute w-2 h-2 bg-pf-accent/30 rounded-full blur-sm"
+            style={{
+              left: `${10 + i * 15}%`,
+              top: `${20 + i * 12}%`,
+            }}
+          />
+        ))}
       </div>
 
-      {/* ─── Horizontal Stepper ─── */}
-      <div className="relative">
-        {/* Connecting Progress Line */}
-        <div className="absolute top-1/2 left-0 w-full h-[3px] bg-pf-border/30 -translate-y-1/2 -z-10 rounded-full" />
-        <motion.div 
-          className="absolute top-1/2 left-0 h-[3px] bg-gradient-to-r from-pf-accent via-pf-info to-pf-accent-glow -translate-y-1/2 -z-10 rounded-full shadow-[0_0_8px_rgba(255,107,53,0.5)]"
+      <div className="glass-panel rounded-3xl p-8 sm:p-10 space-y-10 border border-pf-border/30 relative overflow-hidden backdrop-blur-xl">
+        {/* Animated border glow */}
+        <motion.div
+          animate={{
+            backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 bg-gradient-to-r from-pf-accent/0 via-pf-accent/5 to-pf-accent/0 opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+          style={{
+            backgroundSize: '200% 200%',
+          }}
+        />
+
+        {/* ─── Header & Switch Info ─── */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="flex items-center gap-3"
+            >
+              <motion.div
+                animate={{
+                  rotate: [0, 5, -5, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center shadow-lg shadow-pf-accent/30"
+              >
+                <Sparkles className="w-6 h-6 text-white" />
+              </motion.div>
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  Interactive Funnel Pipeline
+                </h2>
+                <p className="text-xs text-pf-text-muted mt-1">
+                  End-to-end guided sequence mapping connections to target campaigns
+                </p>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Enhanced Toggle Switch */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-3 bg-pf-surface/80 border border-pf-border/40 px-4 py-2.5 rounded-2xl backdrop-blur-md shadow-lg select-none"
+            >
+              <span className="text-xs font-semibold text-pf-text-muted">Auto-Advance</span>
+              <button
+                onClick={toggleAutoAdvance}
+                type="button"
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-all duration-300 relative focus:outline-none focus:ring-2 focus:ring-pf-accent/50 ${
+                  autoAdvance ? 'bg-gradient-to-r from-pf-accent to-pf-accent-glow shadow-lg shadow-pf-accent/30' : 'bg-pf-bg border border-pf-border/40'
+                }`}
+                title={autoAdvance ? "Disable auto-advance" : "Enable auto-advance"}
+              >
+                <motion.div
+                  className="w-4 h-4 rounded-full shadow-md bg-white"
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  animate={{ x: autoAdvance ? 20 : 0 }}
+                />
+              </button>
+              <motion.span
+                animate={{ opacity: autoAdvance ? 1 : 0.5 }}
+                className={`text-[10px] font-bold uppercase w-8 tracking-wider ${autoAdvance ? 'text-pf-accent' : 'text-pf-text-dim'}`}
+              >
+                {autoAdvance ? 'ON' : 'OFF'}
+              </motion.span>
+            </motion.div>
+
+            {/* Enhanced Auto-Advance Feedback Banner */}
+            <AnimatePresence>
+            {countdown !== null && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                className="bg-gradient-to-r from-pf-success/20 to-pf-success/10 border border-pf-success/40 px-5 py-3 rounded-2xl flex items-center justify-between gap-4 text-xs text-pf-success relative overflow-hidden shadow-lg shadow-pf-success/20"
+              >
+                {/* Animated background pattern */}
+                <motion.div
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-pf-success/10 to-transparent"
+                />
+                <div className="flex items-center gap-3 z-10">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="relative flex h-3 w-3"
+                  >
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pf-success opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-pf-success"></span>
+                  </motion.div>
+                  <span className="font-medium">Auto-advancing in <strong className="font-bold font-mono text-base ml-1">{countdown}s</strong>...</span>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const target = step + 1
+                    clearCountdown()
+                    if (target <= 4) setStep(target)
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-pf-success/30 text-white font-bold hover:bg-pf-success/40 transition-all z-10 shadow-md"
+                >
+                  Proceed Now <ArrowRight className="w-4 h-4" />
+                </motion.button>
+
+                {/* Enhanced ticking indicator bar */}
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-pf-success/20 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-pf-success to-pf-accent shadow-[0_0_12px_rgba(46,196,182,0.6)]"
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${(countdown / 5) * 100}%` }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          </div>
+        </div>
+
+      {/* ─── Enhanced Horizontal Stepper ─── */}
+      <div className="relative py-4">
+        {/* Enhanced Connecting Progress Line */}
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-pf-border/20 -translate-y-1/2 -z-10 rounded-full" />
+        <motion.div
+          className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-pf-accent via-pf-info to-pf-accent-glow -translate-y-1/2 -z-10 rounded-full shadow-[0_0_20px_rgba(10,132,255,0.6)]"
           initial={{ width: '0%' }}
           animate={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
           transition={{ type: 'spring', stiffness: 60, damping: 15 }}
-        />
+        >
+          {/* Animated shimmer effect */}
+          <motion.div
+            animate={{
+              x: ['-100%', '100%'],
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+          />
+        </motion.div>
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-4 relative z-10">
           {STEPS.map((s) => {
             const Icon = s.icon
             const isCompleted = step > s.number
             const isActive = step === s.number
-            const isSelectable = s.number <= (readySessionsCount > 0 ? 4 : 2) // Lock step 3-4 if no session is active
+            const isSelectable = s.number <= (readySessionsCount > 0 ? 4 : 2)
 
             return (
-              <button
+              <motion.button
                 key={s.number}
                 onClick={() => isSelectable && handleStepClick(s.number)}
                 disabled={!isSelectable}
+                whileHover={isSelectable ? { scale: 1.05 } : {}}
+                whileTap={isSelectable ? { scale: 0.95 } : {}}
                 className="flex flex-col items-center text-center focus:outline-none relative group disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {/* Pulsing Outer Glow for Active Step */}
+                {/* Enhanced Pulsing Outer Glow for Active Step */}
                 {isActive && (
-                  <motion.div 
-                    className="absolute w-12 h-12 rounded-full bg-pf-accent/15 -z-10 border border-pf-accent/40"
+                  <motion.div
+                    className="absolute w-16 h-16 rounded-full bg-pf-accent/20 -z-10 border border-pf-accent/30"
                     layoutId="activeGlow"
                     initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ 
-                      scale: [1, 1.25, 1], 
-                      opacity: [0.4, 0.7, 0.4] 
+                    animate={{
+                      scale: [1, 1.4, 1],
+                      opacity: [0.3, 0.6, 0.3],
                     }}
-                    transition={{ 
-                      scale: { repeat: Infinity, duration: 2.5, ease: 'easeInOut' },
-                      opacity: { repeat: Infinity, duration: 2.5, ease: 'easeInOut' },
+                    transition={{
+                      scale: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
+                      opacity: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
                       layout: { type: 'spring', stiffness: 80, damping: 15 }
                     }}
-                  />
+                  >
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.5, 0, 0.5],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 rounded-full bg-pf-accent/40 blur-xl"
+                    />
+                  </motion.div>
                 )}
 
-                <motion.div 
+                <motion.div
                   animate={{
-                    scale: isActive ? 1.15 : 1,
-                    y: isActive ? -2 : 0,
-                    borderColor: isActive ? '#ff6b35' : isCompleted ? '#2ec4b6' : 'rgba(255,255,255,0.1)',
+                    scale: isActive ? 1.2 : 1,
+                    y: isActive ? -4 : 0,
+                    borderColor: isActive ? '#0a84ff' : isCompleted ? '#30d158' : 'rgba(255,255,255,0.1)',
                   }}
                   transition={{ type: 'spring', stiffness: 120, damping: 14 }}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    isActive 
-                      ? 'bg-pf-surface text-pf-accent shadow-[0_0_15px_rgba(255,107,53,0.4)]'
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 ${
+                    isActive
+                      ? 'bg-gradient-to-br from-pf-surface to-pf-surface-light text-pf-accent shadow-[0_0_25px_rgba(10,132,255,0.5)]'
                       : isCompleted
-                      ? 'bg-pf-success/20 text-pf-success'
+                      ? 'bg-gradient-to-br from-pf-success/20 to-pf-success/10 text-pf-success shadow-lg'
                       : 'bg-pf-bg text-pf-text-dim'
                   }`}
                 >
@@ -510,310 +624,446 @@ export function PipelineWizard() {
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: 'spring', stiffness: 150, damping: 10 }}
                     >
-                      <CheckCircle className="w-5 h-5" />
+                      <CheckCircle className="w-6 h-6" />
                     </motion.div>
                   ) : (
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-5 h-5" />
                   )}
                 </motion.div>
-                
-                <span className={`text-[10px] sm:text-xs font-bold mt-3 truncate max-w-full transition-colors duration-300 ${
-                  isActive ? 'text-white' : 'text-pf-text-muted group-hover:text-white'
-                }`}>
-                  {s.label}
-                </span>
-              </button>
+
+                <motion.div
+                  animate={{ y: isActive ? 2 : 0 }}
+                  className="mt-3 space-y-1"
+                >
+                  <span className={`text-xs font-bold tracking-wide transition-colors duration-300 ${
+                    isActive ? 'text-white' : 'text-pf-text-muted group-hover:text-white'
+                  }`}>
+                    {s.label}
+                  </span>
+                  <span className={`text-[10px] text-pf-text-dim transition-colors duration-300 ${
+                    isActive ? 'text-pf-accent' : ''
+                  }`}>
+                    {s.desc}
+                  </span>
+                </motion.div>
+              </motion.button>
             )
           })}
         </div>
       </div>
-      {/* ─── Step Content Panel (Framer Motion Switcher) ─── */}
-      <div className="min-h-[300px]">
+      {/* ─── Enhanced Step Content Panel (Framer Motion Switcher) ─── */}
+      <div className="min-h-[400px] relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="space-y-8 relative z-10"
           >
 
             {/* ─── STEP 1: SESSION LINKER ─── */}
             {step === 1 && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-white">WhatsApp Connection Linker</h3>
-                    <p className="text-xs text-pf-text-muted">Link at least one WhatsApp account to establish rotation pools</p>
+              <div className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex items-center justify-between"
+                >
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <motion.div
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-8 h-8 rounded-xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center"
+                      >
+                        <Smartphone className="w-4 h-4 text-white" />
+                      </motion.div>
+                      WhatsApp Connection Linker
+                    </h3>
+                    <p className="text-sm text-pf-text-muted">Link at least one WhatsApp account to establish rotation pools</p>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setIsAddingAcc(!isAddingAcc)}
-                    className="flex items-center gap-1 text-xs font-bold bg-pf-accent/10 border border-pf-accent/30 text-pf-accent px-3 py-1.5 rounded-lg hover:bg-pf-accent/20 transition-all"
+                    className="flex items-center gap-2 text-sm font-bold bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white px-5 py-2.5 rounded-xl shadow-lg shadow-pf-accent/30 transition-all"
                   >
-                    {isAddingAcc ? 'Cancel' : <><Plus className="w-3.5 h-3.5" /> Add Account</>}
-                  </button>
-                </div>
+                    {isAddingAcc ? 'Cancel' : <><Plus className="w-4 h-4" /> Add Account</>}
+                  </motion.button>
+                </motion.div>
 
-                {/* Account Form */}
+                {/* Enhanced Account Form */}
                 <AnimatePresence>
                   {isAddingAcc && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="p-4 bg-pf-surface-light border border-pf-border rounded-xl space-y-3 overflow-hidden"
+                      initial={{ height: 0, opacity: 0, scale: 0.95 }}
+                      animate={{ height: 'auto', opacity: 1, scale: 1 }}
+                      exit={{ height: 0, opacity: 0, scale: 0.95 }}
+                      className="p-6 bg-gradient-to-br from-pf-surface-light to-pf-surface border border-pf-border/50 rounded-2xl space-y-4 overflow-hidden shadow-xl"
                     >
-                      <label className="block text-xs font-bold text-pf-text-muted uppercase">Account Identifier</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Sales Account Alpha"
-                        value={newAccName}
-                        onChange={(e) => setNewAccName(e.target.value)}
-                        className="w-full bg-pf-bg border border-pf-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pf-accent"
-                      />
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-pf-text-muted uppercase tracking-wider">Account Identifier</label>
+                        <motion.input
+                          whileFocus={{ scale: 1.02 }}
+                          type="text"
+                          placeholder="e.g. Sales Account Alpha"
+                          value={newAccName}
+                          onChange={(e) => setNewAccName(e.target.value)}
+                          className="w-full bg-pf-bg/80 border border-pf-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all"
+                        />
+                      </div>
 
-                      <div className="flex gap-2">
-                        <button
+                      <div className="flex gap-3">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => { setAuthMethod('qr'); setPhoneError('') }}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                             authMethod === 'qr'
-                              ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
-                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                              ? 'bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white shadow-lg shadow-pf-accent/30'
+                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/50 hover:border-pf-border'
                           }`}
                         >
-                          <QrCode className="w-3.5 h-3.5" />
+                          <QrCode className="w-4 h-4" />
                           QR Code
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => { setAuthMethod('pairing'); setPhoneError('') }}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                             authMethod === 'pairing'
-                              ? 'bg-pf-accent/20 text-pf-accent border border-pf-accent/30'
-                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/30 hover:border-pf-border/50'
+                              ? 'bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white shadow-lg shadow-pf-accent/30'
+                              : 'bg-pf-bg text-pf-text-muted border border-pf-border/50 hover:border-pf-border'
                           }`}
                         >
-                          <Smartphone className="w-3.5 h-3.5" />
+                          <Smartphone className="w-4 h-4" />
                           Phone Number
-                        </button>
+                        </motion.button>
                       </div>
 
                       {authMethod === 'pairing' && (
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-pf-text-muted uppercase">Phone Number</label>
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-2"
+                        >
+                          <label className="block text-[10px] font-bold text-pf-text-muted uppercase tracking-wider">Phone Number</label>
                           <input
                             type="tel"
                             placeholder="+971 50 123 4567"
                             value={phoneNumber}
                             onChange={(e) => { setPhoneNumber(e.target.value); setPhoneError('') }}
-                            className={`w-full bg-pf-bg border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 transition-all ${
+                            className={`w-full bg-pf-bg/80 border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 transition-all ${
                               phoneError
                                 ? 'border-pf-error focus:border-pf-error focus:ring-pf-error/30'
-                                : 'border-pf-border focus:border-pf-accent focus:ring-pf-accent/30'
+                                : 'border-pf-border focus:border-pf-accent focus:ring-pf-accent/20'
                             }`}
                           />
                           {phoneError && <p className="text-[10px] text-pf-error font-medium">{phoneError}</p>}
                           {phoneNumber.replace(/\D/g, '').length > 0 && phoneNumber.replace(/\D/g, '').length < 7 && (
                             <p className="text-[10px] text-pf-warning font-medium">Number too short — include country code</p>
                           )}
-                        </div>
+                        </motion.div>
                       )}
 
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={handleAddAccount}
                         disabled={
                           !newAccName.trim() ||
                           (authMethod === 'pairing' && phoneNumber.replace(/\D/g, '').length < 7)
                         }
-                        className="w-full btn-accent py-3 text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-pf-accent to-pf-accent-g hover:from-pf-accent-glow hover:to-pf-accent text-white font-bold py-3.5 rounded-xl shadow-lg shadow-pf-accent/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-5 h-5" />
                         Create {authMethod === 'pairing' ? '& Connect' : 'Account'}
-                      </button>
+                      </motion.button>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
 
-                {/* Accounts List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Enhanced Accounts List */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {Object.values(waStatuses).length === 0 ? (
-                    <div className="col-span-full border border-dashed border-pf-border rounded-2xl p-10 text-center text-pf-text-dim text-xs">
-                      <Smartphone className="w-8 h-8 text-pf-text-dim/40 mx-auto mb-2" />
-                      No linked accounts. Please click "Add Account" to connect your first instance.
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="col-span-full border-2 border-dashed border-pf-border/50 rounded-3xl p-12 text-center"
+                    >
+                      <motion.div
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-pf-surface-light flex items-center justify-center"
+                      >
+                        <Smartphone className="w-8 h-8 text-pf-text-dim/60" />
+                      </motion.div>
+                      <p className="text-sm text-pf-text-dim font-medium">No linked accounts yet</p>
+                      <p className="text-xs text-pf-text-dim/60 mt-1">Click "Add Account" to connect your first instance</p>
+                    </motion.div>
                   ) : (
-                    Object.values(waStatuses).map((status) => (
-                      <div key={status.id} className="bg-pf-surface/40 border border-pf-border/40 rounded-xl p-4 flex flex-col justify-between space-y-4">
+                    Object.values(waStatuses).map((status, index) => (
+                      <motion.div
+                        key={status.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ scale: 1.02, y: -4 }}
+                        className="bg-gradient-to-br from-pf-surface/60 to-pf-surface/40 border border-pf-border/40 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-lg hover:shadow-xl transition-all"
+                      >
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-sm text-white truncate">{status.name || 'Account'}</span>
-                          <div className="flex items-center gap-1">
-                            <span className={`text-[10px] font-bold uppercase ${status.state === 'ready' ? 'text-pf-success' : 'text-pf-warning'}`}>
-                              {status.state}
-                            </span>
-                            <button
-                              onClick={() => handleRemoveAccount(status.id)}
-                              className="text-pf-text-dim hover:text-pf-error p-1 rounded transition-colors"
+                          <div className="flex items-center gap-2">
+                            <motion.span
+                              animate={{ scale: [1, 1.1, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className={`text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${
+                                status.state === 'ready' ? 'bg-pf-success/20 text-pf-success' : 'bg-pf-warning/20 text-pf-warning'
+                              }`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              {status.state}
+                            </motion.span>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleRemoveAccount(status.id)}
+                              className="text-pf-text-dim hover:text-pf-error p-1.5 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </motion.button>
                           </div>
                         </div>
 
                         {status.qrCode && status.state === 'qr_ready' && (
-                          <div className="bg-white p-3 rounded-lg flex flex-col items-center gap-2 border border-gray-200">
-                            <img src={status.qrCode} alt="QR Code" className="w-32 h-32" />
-                            <span className="text-[9px] text-gray-500 font-bold uppercase">Scan to Authorize</span>
-                          </div>
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white p-4 rounded-2xl flex flex-col items-center gap-3 border border-gray-200 shadow-lg"
+                          >
+                            <img src={status.qrCode} alt="QR Code" className="w-36 h-36" />
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Scan to Authorize</span>
+                          </motion.div>
                         )}
 
                         {status.pairingCode && status.state === 'pairing' && (
-                          <div className="bg-pf-surface/60 p-3 rounded-lg flex flex-col items-center gap-2 border border-pf-accent/30">
-                            <div className="p-2 rounded-full bg-pf-accent/20">
-                              <Smartphone className="w-5 h-5 text-pf-accent" />
-                            </div>
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-gradient-to-br from-pf-surface/80 to-pf-surface/60 p-4 rounded-2xl flex flex-col items-center gap-3 border border-pf-accent/30 shadow-lg"
+                          >
+                            <motion.div
+                              animate={{ rotate: [0, 360] }}
+                              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                              className="p-3 rounded-full bg-pf-accent/20"
+                            >
+                              <Smartphone className="w-6 h-6 text-pf-accent" />
+                            </motion.div>
                             <div className="flex flex-col items-center gap-1">
-                              <span className="text-[9px] font-bold text-pf-text-muted uppercase tracking-widest">Enter This Code</span>
-                              <span className="text-[8px] text-pf-text-dim font-medium">WhatsApp → Linked Devices → Link with phone number</span>
+                              <span className="text-[10px] font-bold text-pf-text-muted uppercase tracking-widest">Enter This Code</span>
+                              <span className="text-[9px] text-pf-text-dim font-medium text-center">WhatsApp → Linked Devices → Link with phone number</span>
                             </div>
-                            <div className="px-5 py-2.5 bg-pf-bg rounded-lg border border-pf-border/30">
-                              <span className="font-mono text-xl font-black tracking-[0.15em] text-pf-accent">{status.pairingCode}</span>
+                            <div className="px-6 py-3 bg-pf-bg rounded-xl border border-pf-border/30 shadow-inner">
+                              <span className="font-mono text-2xl font-black tracking-[0.2em] text-pf-accent">{status.pairingCode}</span>
                             </div>
-                          </div>
+                          </motion.div>
                         )}
 
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => status.state === 'ready' ? handleDisconnectAccount(status.id) : handleConnectAccount(status.id)}
                           disabled={status.state === 'connecting' || status.state === 'qr_ready' || status.state === 'pairing' || linkingLoading === status.id}
-                          className={`w-full py-2 rounded-lg font-bold text-xs ${
+                          className={`w-full py-3 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 ${
                             status.state === 'ready'
-                              ? 'bg-pf-error/15 text-pf-error hover:bg-pf-error/20 border border-pf-error/30'
-                              : 'bg-pf-accent text-white hover:bg-pf-accent-glow'
-                          } transition-all disabled:opacity-50`}
+                              ? 'bg-gradient-to-r from-pf-error/20 to-pf-error/10 text-pf-error hover:from-pf-error/30 hover:to-pf-error/20 border border-pf-error/30'
+                              : 'bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white hover:from-pf-accent-glow hover:to-pf-accent shadow-lg shadow-pf-accent/30'
+                          }`}
                         >
-                          {linkingLoading === status.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" /> :
+                          {linkingLoading === status.id ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> :
                            status.state === 'ready' ? 'Disconnect' : 'Connect Account'}
-                        </button>
-                      </div>
+                        </motion.button>
+                      </motion.div>
                     ))
                   )}
                 </div>
 
                 {readySessionsCount > 0 && (
-                  <div className="flex justify-end pt-4 border-t border-pf-border/40">
-                    <button
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex justify-end pt-6 border-t border-pf-border/40"
+                  >
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => setStep(2)}
-                      className="btn-accent flex items-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-pf-accent/20"
+                      className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white shadow-lg shadow-pf-accent/30 transition-all"
                     >
-                      Continue to Generation <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
+                      Continue to Generation <ArrowRight className="w-5 h-5" />
+                    </motion.button>
+                  </motion.div>
                 )}
               </div>
             )}
 
             {/* ─── STEP 2: NUMBER GENERATOR ─── */}
             {step === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-bold text-white">List Generation Gateway</h3>
-                  <p className="text-xs text-pf-text-muted">Create target customer lists by dial parameters and country codes</p>
-                </div>
+              <div className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="space-y-2"
+                >
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <motion.div
+                      animate={{ rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-8 h-8 rounded-xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center"
+                    >
+                      <Zap className="w-4 h-4 text-white" />
+                    </motion.div>
+                    List Generation Gateway
+                  </h3>
+                  <p className="text-sm text-pf-text-muted">Create target customer lists by dial parameters and country codes</p>
+                </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Country Select */}
-                  <div>
-                    <label className="block text-xs font-bold text-pf-text-muted mb-2 uppercase">Country Profile</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Enhanced Country Select */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-2"
+                  >
+                    <label className="block text-xs font-bold text-pf-text-muted uppercase tracking-wider">Country Profile</label>
                     <div className="relative">
-                      <select
+                      <motion.select
+                        whileFocus={{ scale: 1.02 }}
                         value={selectedCountry}
                         onChange={(e) => setSelectedCountry(Number(e.target.value))}
-                        className="w-full bg-pf-surface border border-pf-border rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-pf-accent appearance-none"
+                        className="w-full bg-pf-surface/80 border border-pf-border/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 appearance-none transition-all"
                       >
                         {countries.map((c) => (
                           <option key={c.index} value={c.index}>
                             {c.flag} {c.name} ({c.dial})
                           </option>
                         ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pf-text-dim pointer-events-none" />
+                      </motion.select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-pf-text-dim pointer-events-none" />
                     </div>
-                  </div>
+                  </motion.div>
 
-                  {/* Quantity */}
-                  <div>
-                    <label className="block text-xs font-bold text-pf-text-muted mb-2 uppercase">List Batch Quantity</label>
-                    <input
+                  {/* Enhanced Quantity */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-2"
+                  >
+                    <label className="block text-xs font-bold text-pf-text-muted uppercase tracking-wider">List Batch Quantity</label>
+                    <motion.input
+                      whileFocus={{ scale: 1.02 }}
                       type="number"
                       min={10}
                       max={10000}
                       value={genQuantity}
                       onChange={(e) => setGenQuantity(Math.min(10000, Math.max(10, Number(e.target.value))))}
-                      className="w-full bg-pf-surface border border-pf-border rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-pf-accent"
+                      className="w-full bg-pf-surface/80 border border-pf-border/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 transition-all"
                     />
-                  </div>
+                  </motion.div>
                 </div>
 
-                {/* Checklist options */}
-                <div className="flex flex-wrap gap-4 p-3 bg-pf-surface/30 rounded-xl border border-pf-border/40">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-pf-text-muted font-medium">
-                    <input
-                      type="checkbox"
-                      checked={useDial}
-                      onChange={(e) => setUseDial(e.target.checked)}
-                      className="rounded border-pf-border bg-pf-surface text-pf-accent focus:ring-pf-accent"
-                    />
-                    Append Dial Code
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-pf-text-muted font-medium">
-                    <input
-                      type="checkbox"
-                      checked={useSpaces}
-                      onChange={(e) => setUseSpaces(e.target.checked)}
-                      className="rounded border-pf-border bg-pf-surface text-pf-accent focus:ring-pf-accent"
-                    />
-                    Insert Formatting Spaces
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-pf-text-muted font-medium">
-                    <input
-                      type="checkbox"
-                      checked={localOnly}
-                      onChange={(e) => setLocalOnly(e.target.checked)}
-                      className="rounded border-pf-border bg-pf-surface text-pf-accent focus:ring-pf-accent"
-                    />
-                    Local Format Only
-                  </label>
-                </div>
+                {/* Enhanced Checklist options */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex flex-wrap gap-4 p-5 bg-gradient-to-br from-pf-surface/50 to-pf-surface/30 rounded-2xl border border-pf-border/40"
+                >
+                  {[
+                    { label: 'Append Dial Code', checked: useDial, onChange: setUseDial },
+                    { label: 'Insert Formatting Spaces', checked: useSpaces, onChange: setUseSpaces },
+                    { label: 'Local Format Only', checked: localOnly, onChange: setLocalOnly },
+                  ].map((option, index) => (
+                    <motion.label
+                      key={option.label}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
+                      whileHover={{ scale: 1.05 }}
+                      className="flex items-center gap-3 cursor-pointer px-4 py-2 rounded-xl bg-pf-bg/50 border border-pf-border/30 hover:border-pf-accent/50 transition-all"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={option.checked}
+                        onChange={(e) => option.onChange(e.target.checked)}
+                        className="w-4 h-4 rounded border-pf-border bg-pf-surface text-pf-accent focus:ring-2 focus:ring-pf-accent/30 transition-all"
+                      />
+                      <span className="text-xs text-pf-text-muted font-medium">{option.label}</span>
+                    </motion.label>
+                  ))}
+                </motion.div>
 
                 {genError && (
-                  <div className="p-3 bg-pf-error/10 border border-pf-error/30 text-pf-error text-xs rounded-lg">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-pf-error/15 border border-pf-error/30 text-pf-error text-sm rounded-2xl flex items-center gap-3"
+                  >
+                    <XCircle className="w-5 h-5" />
                     {genError}
-                  </div>
+                  </motion.div>
                 )}
 
                 {genSuccess && (
-                  <div className="p-3 bg-pf-success/15 border border-pf-success/30 text-pf-success text-xs rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Successfully generated {genSuccess.count} contact targets (Dataset ID: {genSuccess.id.slice(0, 8)})</span>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-5 bg-gradient-to-r from-pf-success/20 to-pf-success/10 border border-pf-success/40 text-pf-success text-sm rounded-2xl flex items-center gap-3 shadow-lg shadow-pf-success/20"
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.5, repeat: Infinity }}
+                      className="w-8 h-8 rounded-full bg-pf-success/30 flex items-center justify-center"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                    </motion.div>
+                    <div>
+                      <span className="font-bold">Successfully generated {genSuccess.count} contact targets</span>
+                      <span className="text-pf-success/70 ml-2">(Dataset ID: {genSuccess.id.slice(0, 8)})</span>
+                    </div>
+                  </motion.div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleGenerate}
                     disabled={genLoading || countries.length === 0}
-                    className="flex-1 bg-gradient-to-r from-pf-accent to-pf-accent-glow hover:from-pf-accent-glow hover:to-pf-accent text-white font-bold py-3 rounded-xl transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 bg-gradient-to-r from-pf-accent to-pf-accent-glow hover:from-pf-accent-glow hover:to-pf-accent text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-pf-accent/30 disabled:opacity-50 flex items-center justify-center gap-3 text-base"
                   >
-                    {genLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Zap className="w-4 h-4" /> Generate Target List</>}
-                  </button>
+                    {genLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Zap className="w-5 h-5" /> Generate Target List</>}
+                  </motion.button>
 
                   {genSuccess && (
-                    <button
+                    <motion.button
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setStep(3)}
-                      className="btn-accent px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pf-accent/20 transition-all hover:bg-pf-accent-glow"
+                      className="px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white shadow-lg shadow-pf-accent/30 transition-all hover:from-pf-accent-glow hover:to-pf-accent text-base"
                     >
-                      Continue to Validator <ArrowRight className="w-4 h-4" />
-                    </button>
+                      Continue to Validator <ArrowRight className="w-5 h-5" />
+                    </motion.button>
                   )}
                 </div>
               </div>
@@ -821,218 +1071,346 @@ export function PipelineWizard() {
 
             {/* ─── STEP 3: VALIDATOR ─── */}
             {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-bold text-white">Live Filters & Validation</h3>
-                  <p className="text-xs text-pf-text-muted">Validate targets using active WhatsApp rotation to eliminate non-active numbers</p>
-                </div>
+              <div className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="space-y-2"
+                >
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <motion.div
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-8 h-8 rounded-xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center"
+                    >
+                      <Shield className="w-4 h-4 text-white" />
+                    </motion.div>
+                    Live Filters & Validation
+                  </h3>
+                  <p className="text-sm text-pf-text-muted">Validate targets using active WhatsApp rotation to eliminate non-active numbers</p>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Dataset Selector */}
-                  <div>
-                    <label className="block text-xs font-bold text-pf-text-muted mb-2 uppercase">Target Dataset</label>
-                    <select
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Enhanced Dataset Selector */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-2"
+                  >
+                    <label className="block text-xs font-bold text-pf-text-muted uppercase tracking-wider">Target Dataset</label>
+                    <motion.select
+                      whileFocus={{ scale: 1.02 }}
                       value={selectedDatasetId}
                       onChange={(e) => setSelectedDatasetId(e.target.value)}
-                      className="w-full bg-pf-surface border border-pf-border rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-pf-accent appearance-none"
+                      className="w-full bg-pf-surface/80 border border-pf-border/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 appearance-none transition-all"
                     >
                       {datasets.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name} ({d.counts?.pending || 0} pending)
                         </option>
                       ))}
-                    </select>
-                  </div>
+                    </motion.select>
+                  </motion.div>
 
-                  {/* Account Selector */}
-                  <div>
-                    <label className="block text-xs font-bold text-pf-text-muted mb-2 uppercase">Validator Gateway Account</label>
-                    <select
+                  {/* Enhanced Account Selector */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-2"
+                  >
+                    <label className="block text-xs font-bold text-pf-text-muted uppercase tracking-wider">Validator Gateway Account</label>
+                    <motion.select
+                      whileFocus={{ scale: 1.02 }}
                       value={selectedAccountId}
                       onChange={(e) => setSelectedAccountId(e.target.value)}
-                      className="w-full bg-pf-surface border border-pf-border rounded-lg py-2.5 px-3 text-sm text-white focus:outline-none focus:border-pf-accent appearance-none"
+                      className="w-full bg-pf-surface/80 border border-pf-border/50 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-pf-accent focus:ring-2 focus:ring-pf-accent/20 appearance-none transition-all"
                     >
                       {Object.values(waStatuses).map((acc) => (
                         <option key={acc.id} value={acc.id} disabled={acc.state !== 'ready'}>
                           {acc.name || 'Default'} ({acc.state})
                         </option>
                       ))}
-                    </select>
-                  </div>
+                    </motion.select>
+                  </motion.div>
                 </div>
 
-                {/* Stats row */}
+                {/* Enhanced Stats row */}
                 {displayCounts && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+                  >
                     {[
-                      { label: 'Total Uploaded', value: displayCounts.total, color: 'text-white' },
-                      { label: 'Pending', value: displayCounts.pending, color: 'text-pf-warning' },
-                      { label: 'Campaign', value: displayCounts.campaign ?? displayCounts.valid, color: 'text-pf-success' },
-                      { label: 'Excluded', value: displayCounts.excluded ?? (displayCounts.invalid + displayCounts.error), color: 'text-pf-text-dim' },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className="bg-pf-bg/50 border border-pf-border/30 rounded-xl p-3 text-center">
-                        <p className={`text-lg font-bold ${color}`}>{value}</p>
-                        <p className="text-[10px] text-pf-text-muted uppercase font-bold tracking-wider">{label}</p>
-                      </div>
+                      { label: 'Total Uploaded', value: displayCounts.total, color: 'text-white', bg: 'from-pf-surface/50 to-pf-surface/30' },
+                      { label: 'Pending', value: displayCounts.pending, color: 'text-pf-warning', bg: 'from-pf-warning/20 to-pf-warning/10' },
+                      { label: 'Campaign', value: displayCounts.campaign ?? displayCounts.valid, color: 'text-pf-success', bg: 'from-pf-success/20 to-pf-success/10' },
+                      { label: 'Excluded', value: displayCounts.excluded ?? (displayCounts.invalid + displayCounts.error), color: 'text-pf-text-dim', bg: 'from-pf-surface/50 to-pf-surface/30' },
+                    ].map(({ label, value, color, bg }, index) => (
+                      <motion.div
+                        key={label}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + index * 0.05 }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        className={`bg-gradient-to-br ${bg} border border-pf-border/30 rounded-2xl p-4 text-center shadow-lg`}
+                      >
+                        <motion.p
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+                          className={`text-2xl font-bold ${color}`}
+                        >
+                          {value}
+                        </motion.p>
+                        <p className="text-[10px] text-pf-text-muted uppercase font-bold tracking-wider mt-1">{label}</p>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
 
-                {/* Real-time progress bar */}
+                {/* Enhanced Real-time progress bar */}
                 {validationProgress && (
-                  <div className="bg-pf-surface-light border border-pf-accent/20 rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between text-xs">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-pf-surface-light to-pf-surface border border-pf-accent/30 rounded-2xl p-5 space-y-4 shadow-lg shadow-pf-accent/20"
+                  >
+                    <div className="flex items-center justify-between text-sm">
                       <span className="text-pf-text-muted font-bold">
-                        Filtering targets: {validationProgress.current} / {validationProgress.total}
+                        Filtering targets: <span className="text-white">{validationProgress.current}</span> / <span className="text-white">{validationProgress.total}</span>
                       </span>
-                      <div className="flex items-center gap-1.5 font-mono">
-                        <span className={validationProgress.valid ? 'text-pf-success font-bold' : 'text-pf-text-dim'}>
+                      <div className="flex items-center gap-2 font-mono">
+                        <span className={validationProgress.valid ? 'text-pf-success font-bold text-lg' : 'text-pf-error'}>
                           {validationProgress.digits}
                         </span>
-                        <div className={`w-2 h-2 rounded-full ${validationProgress.valid ? 'bg-pf-success animate-pulse' : 'bg-pf-error'}`} />
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                          className={`w-3 h-3 rounded-full ${validationProgress.valid ? 'bg-pf-success shadow-lg shadow-pf-success/50' : 'bg-pf-error'}`}
+                        />
                       </div>
                     </div>
-                    <div className="w-full bg-pf-bg/80 h-3.5 rounded-full overflow-hidden p-[2px] border border-pf-border/40 relative">
+                    <div className="w-full bg-pf-bg/80 h-4 rounded-full overflow-hidden p-[2px] border border-pf-border/40 relative">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-pf-accent via-pf-info to-pf-accent-glow relative"
+                        className="h-full rounded-full bg-gradient-to-r from-pf-accent via-pf-info to-pf-accent-glow relative shadow-lg"
                         initial={{ width: '0%' }}
                         animate={{ width: `${(validationProgress.current / validationProgress.total) * 100}%` }}
                         transition={{ type: 'spring', stiffness: 50, damping: 15, mass: 0.8 }}
                       >
                         {/* High-fidelity moving sheen highlight */}
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
                           animate={{ x: ['-100%', '100%'] }}
                           transition={{ repeat: Infinity, duration: 1.6, ease: 'linear' }}
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
                         />
                       </motion.div>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
                 {lastValidationResult && !validationProgress && (
-                  <div className="bg-pf-success/15 border border-pf-success/30 rounded-xl p-4 text-pf-success text-xs flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Live check cycle completed successfully. All target filters applied.</span>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-gradient-to-r from-pf-success/20 to-pf-success/10 border border-pf-success/40 rounded-2xl p-5 text-pf-success text-sm flex items-center gap-3 shadow-lg shadow-pf-success/20"
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.5, repeat: Infinity }}
+                      className="w-8 h-8 rounded-full bg-pf-success/30 flex items-center justify-center"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                    </motion.div>
+                    <span className="font-bold">Live check cycle completed successfully. All target filters applied.</span>
+                  </motion.div>
                 )}
 
                 {valError && (
-                  <div className="p-3 bg-pf-error/15 border border-pf-error/30 text-pf-error text-xs rounded-lg">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-pf-error/15 border border-pf-error/30 text-pf-error text-sm rounded-2xl flex items-center gap-3"
+                  >
+                    <XCircle className="w-5 h-5" />
                     {valError}
-                  </div>
+                  </motion.div>
                 )}
 
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-pf-text-dim mb-1 uppercase">Concurrency (Workers): {concurrency}</label>
-                    <input
+                <div className="flex items-center gap-6">
+                  <div className="flex-1 space-y-2">
+                    <label className="block text-[10px] font-bold text-pf-text-dim uppercase tracking-wider">Concurrency (Workers): <span className="text-pf-accent">{concurrency}</span></label>
+                    <motion.input
+                      whileFocus={{ scale: 1.02 }}
                       type="range"
                       min={1}
                       max={5}
                       value={concurrency}
                       onChange={(e) => setConcurrency(Number(e.target.value))}
-                      className="w-full accent-pf-accent h-1.5 bg-pf-bg rounded-lg appearance-none cursor-pointer"
+                      className="w-full accent-pf-accent h-2 bg-pf-bg rounded-xl appearance-none cursor-pointer"
                     />
-                    <p className="mt-2 text-[10px] text-pf-text-dim">
+                    <p className="text-[10px] text-pf-text-dim">
                       Use lower concurrency for safer WhatsApp validation throughput.
                     </p>
                   </div>
-                  
+
                   {lastValidationResult && !validationProgress && (
-                    <button
+                    <motion.button
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setStep(4)}
-                      className="btn-accent px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all hover:bg-pf-accent-glow"
+                      className="px-8 py-4 rounded-2xl font-bold flex items-center gap-3 bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white shadow-lg shadow-pf-accent/30 transition-all hover:from-pf-accent-glow hover:to-pf-accent"
                     >
-                      Continue to Action Hub <ArrowRight className="w-4 h-4" />
-                    </button>
+                      Continue to Action Hub <ArrowRight className="w-5 h-5" />
+                    </motion.button>
                   )}
 
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleStartValidation}
                     disabled={valLoading || !activeWASessionReady || !selectedDatasetId || (displayCounts && displayCounts.pending === 0)}
-                    className="btn-accent px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg disabled:opacity-50"
+                    className="px-8 py-4 rounded-2xl font-bold flex items-center gap-3 bg-gradient-to-r from-pf-accent to-pf-accent-glow text-white shadow-lg shadow-pf-accent/30 disabled:opacity-50 transition-all"
                   >
-                    {valLoading ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                     validationProgress ? <><Clock className="w-4 h-4 animate-pulse" /> Validating...</> :
-                     <><Play className="w-4 h-4" /> Run Validator</>}
-                  </button>
+                    {valLoading ? <Loader2 className="w-5 h-5 animate-spin" /> :
+                     validationProgress ? <><Clock className="w-5 h-5 animate-pulse" /> Validating...</> :
+                     <><Play className="w-5 h-5" /> Run Validator</>}
+                  </motion.button>
                 </div>
               </div>
             )}
 
             {/* ─── STEP 4: ACTION HUB ─── */}
             {step === 4 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-bold text-white">Broadcast Campaign Launchpad</h3>
-                  <p className="text-xs text-pf-text-muted">Target list validated. Instantly dispatch bulk messages or export dataset profiles</p>
-                </div>
+              <div className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="space-y-2"
+                >
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <motion.div
+                      animate={{ rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-8 h-8 rounded-xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center"
+                    >
+                      <Send className="w-4 h-4 text-white" />
+                    </motion.div>
+                    Broadcast Campaign Launchpad
+                  </h3>
+                  <p className="text-sm text-pf-text-muted">Target list validated. Instantly dispatch bulk messages or export dataset profiles</p>
+                </motion.div>
 
-                {/* Pre-selected Dataset Details Card */}
+                {/* Enhanced Pre-selected Dataset Details Card */}
                 {selectedDatasetData && (
-                  <div className="bg-pf-surface-light border border-pf-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Database className="w-4 h-4 text-pf-accent" />
-                        <span className="font-bold text-sm text-white">{selectedDatasetData.name}</span>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    whileHover={{ scale: 1.01, y: -2 }}
+                    className="bg-gradient-to-br from-pf-surface-light to-pf-surface border border-pf-border/50 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-lg"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <motion.div
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                          className="w-10 h-10 rounded-xl bg-gradient-to-br from-pf-accent to-pf-accent-glow flex items-center justify-center shadow-lg shadow-pf-accent/30"
+                        >
+                          <Database className="w-5 h-5 text-white" />
+                        </motion.div>
+                        <span className="font-bold text-base text-white">{selectedDatasetData.name}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-pf-text-muted font-medium">
+                      <div className="flex items-center gap-6 text-sm text-pf-text-muted font-medium">
                         <span>Total uploaded: <strong className="text-white">{displayCounts?.total || 0}</strong></span>
                         <span>Verified Active: <strong className="text-pf-success">{currentValValid}</strong></span>
                       </div>
                     </div>
-                    
-                    <button
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={handleDownloadCSV}
-                      className="flex items-center gap-1.5 text-xs font-bold bg-pf-surface border border-pf-border hover:border-pf-accent text-white px-4 py-2 rounded-lg transition-all"
+                      className="flex items-center gap-2 text-sm font-bold bg-gradient-to-r from-pf-surface to-pf-surface-light border border-pf-border hover:border-pf-accent text-white px-6 py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
                     >
-                      <Download className="w-4 h-4" /> Download CSV
-                    </button>
-                  </div>
+                      <Download className="w-5 h-5" /> Download CSV
+                    </motion.button>
+                  </motion.div>
                 )}
 
-                {/* Big Action cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Enhanced Big Action cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* WhatsApp Broadcast */}
-                  <button
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    whileHover={{ scale: 1.03, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleLaunchCampaign('whatsapp')}
                     disabled={currentValValid === 0}
-                    className="glass-panel text-left p-5 rounded-2xl hover:border-pf-success transition-all group flex flex-col justify-between space-y-4 disabled:opacity-40 disabled:pointer-events-none"
+                    className="glass-panel text-left p-8 rounded-3xl hover:border-pf-success transition-all group flex flex-col justify-between space-y-6 disabled:opacity-40 disabled:pointer-events-none shadow-lg hover:shadow-2xl hover:shadow-pf-success/20"
                   >
-                    <div className="space-y-2">
-                      <div className="w-10 h-10 rounded-xl bg-pf-success/20 flex items-center justify-center border border-pf-success/30 group-hover:scale-105 transition-all">
-                        <Smartphone className="w-5 h-5 text-pf-success" />
+                    <div className="space-y-4">
+                      <motion.div
+                        whileHover={{ rotate: 5, scale: 1.1 }}
+                        className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pf-success/30 to-pf-success/20 flex items-center justify-center border border-pf-success/40 group-hover:shadow-lg group-hover:shadow-pf-success/30 transition-all"
+                      >
+                        <Smartphone className="w-7 h-7 text-pf-success" />
+                      </motion.div>
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-white text-lg">WhatsApp Rotated Broadcast</h4>
+                        <p className="text-sm text-pf-text-muted font-medium leading-relaxed">
+                          Send automated anti-ban templates using rotation pools to bypass restrictions.
+                        </p>
                       </div>
-                      <h4 className="font-bold text-white text-base">WhatsApp Rotated Broadcast</h4>
-                      <p className="text-xs text-pf-text-muted font-medium">
-                        Send automated anti-ban templates using rotation pools to bypass restrictions.
-                      </p>
                     </div>
-                    <span className="text-xs text-pf-success font-bold flex items-center gap-1 mt-2">
-                      Configure Campaign <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
+                    <motion.span
+                      whileHover={{ x: 5 }}
+                      className="text-sm text-pf-success font-bold flex items-center gap-2 mt-2"
+                    >
+                      Configure Campaign <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </motion.span>
+                  </motion.button>
 
                   {/* SMS gateway */}
-                  <button
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    whileHover={{ scale: 1.03, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleLaunchCampaign('sms')}
                     disabled={currentValValid === 0}
-                    className="glass-panel text-left p-5 rounded-2xl hover:border-pf-info transition-all group flex flex-col justify-between space-y-4 disabled:opacity-40 disabled:pointer-events-none"
+                    className="glass-panel text-left p-8 rounded-3xl hover:border-pf-info transition-all group flex flex-col justify-between space-y-6 disabled:opacity-40 disabled:pointer-events-none shadow-lg hover:shadow-2xl hover:shadow-pf-info/20"
                   >
-                    <div className="space-y-2">
-                      <div className="w-10 h-10 rounded-xl bg-pf-info/20 flex items-center justify-center border border-pf-info/30 group-hover:scale-105 transition-all">
-                        <MessageSquare className="w-5 h-5 text-pf-info" />
+                    <div className="space-y-4">
+                      <motion.div
+                        whileHover={{ rotate: -5, scale: 1.1 }}
+                        className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pf-info/30 to-pf-info/20 flex items-center justify-center border border-pf-info/40 group-hover:shadow-lg group-hover:shadow-pf-info/30 transition-all"
+                      >
+                        <MessageSquare className="w-7 h-7 text-pf-info" />
+                      </motion.div>
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-white text-lg">TextBee SMS Blast</h4>
+                        <p className="text-sm text-pf-text-muted font-medium leading-relaxed">
+                          Dispatch direct high-capacity texts through linked cellular gateway APIs.
+                        </p>
                       </div>
-                      <h4 className="font-bold text-white text-base">TextBee SMS Blast</h4>
-                      <p className="text-xs text-pf-text-muted font-medium">
-                        Dispatch direct high-capacity texts through linked cellular gateway APIs.
-                      </p>
                     </div>
-                    <span className="text-xs text-pf-info font-bold flex items-center gap-1 mt-2">
-                      Configure Campaign <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
+                    <motion.span
+                      whileHover={{ x: 5 }}
+                      className="text-sm text-pf-info font-bold flex items-center gap-2 mt-2"
+                    >
+                      Configure Campaign <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </motion.span>
+                  </motion.button>
                 </div>
               </div>
             )}
@@ -1041,6 +1419,7 @@ export function PipelineWizard() {
         </AnimatePresence>
       </div>
 
+      </div>
     </div>
   )
 }
